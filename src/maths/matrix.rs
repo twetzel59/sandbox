@@ -5,7 +5,7 @@
 
 use super::vector::{Vec2f, Vec3f};
 use luminance::linear::M44;
-use std::ops::Mul;
+use std::ops::{Mul, Neg};
 
 /// Conveniently creates a Mat4x4 matrix.
 ///
@@ -106,8 +106,21 @@ pub trait Transform {
     fn to_matrix(&self) -> Mat4x4;
 }
 
+/// Typeclass for invertible transformations, or transformations
+/// that have an efficiently computable inverse.
+///
+/// These transformations are always ``Copy`` and can be inverted
+/// with the unary negation operator (``Neg``) or the provided
+/// method. They also always implement ``Transform``.
+pub trait InvertibleTransform: Copy + Neg<Output = Self> + Transform {
+    /// Invert (negate) the transformation.
+    fn inverse(self) -> Self {
+        -self
+    }
+}
+
 /// Stores a translation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Translation {
     pub offset: Vec3f,
 }
@@ -126,26 +139,35 @@ impl Translation {
     }
 }
 
+impl Neg for Translation {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            offset: -self.offset,
+        }
+    }
+}
+
+impl InvertibleTransform for Translation {}
+
 impl Transform for Translation {
+    #[rustfmt::skip]
     fn to_matrix(&self) -> Mat4x4 {
-        let Vec3f {
-            x: dx,
-            y: dy,
-            z: dz,
-        } = self.offset;
+        let Vec3f { x: dx, y: dy, z: dz } = self.offset;
 
         mat4![
-            1., 0., 0., dx, //
-            0., 1., 0., dy, //
-            0., 0., 1., dz, //
-            0., 0., 0., 1., //
+            1., 0., 0., dx,
+            0., 1., 0., dy,
+            0., 0., 1., dz,
+            0., 0., 0., 1.,
         ]
     }
 }
 
 /// Stores a rotation. Only rotations about the X and Y axis
 /// are supported.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Rotation {
     pub tilt: Vec2f,
 }
@@ -189,8 +211,18 @@ impl Transform for Rotation {
     }
 }
 
+impl Neg for Rotation {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self { tilt: -self.tilt }
+    }
+}
+
+impl InvertibleTransform for Rotation {}
+
 /// Stores a 3D projection.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Projection {
     pub fov: f32,
     pub aspect: f32,

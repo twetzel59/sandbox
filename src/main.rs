@@ -1,6 +1,4 @@
 use luminance::context::GraphicsContext;
-use std::time::Instant;
-//use luminance::face_culling::FaceCulling;
 use luminance::framebuffer::Framebuffer;
 use luminance::linear::M44;
 use luminance::render_state::RenderState;
@@ -9,8 +7,10 @@ use luminance::tess::{Mode, TessBuilder};
 use luminance_derive::{Semantics, UniformInterface, Vertex};
 use luminance_glfw_custom::event::{Action, Key, WindowEvent};
 use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt};
+use sandbox::entity::camera::Camera;
 use sandbox::maths::matrix::*;
 use sandbox::maths::vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f};
+use std::{f32::consts::PI, time::Instant};
 
 // TODO: Group imports, fix globs.
 
@@ -114,8 +114,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut translation = Translation::new((0., 0., 0.));
-    let mut camera = Translation::new((0., 0., 0.));
+    let mut cam = Camera::at_origin();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
     let mut back_buffer = Framebuffer::back_buffer(surface.size());
@@ -123,6 +122,7 @@ fn main() {
 
     let mut resized = true;
     'game: loop {
+        // Poll events
         for event in surface.poll_events() {
             match event {
                 WindowEvent::Close | WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
@@ -139,45 +139,49 @@ fn main() {
             }
         }
 
+        // Handle resize
         if resized {
             println!("make proj matrix!");
             proj_mat = make_proj(&surface).to_matrix();
         }
 
-        let speed = 0.0025;
+        let move_speed = 0.0025;
 
-        /*
-        if surface.lib_handle().get_key(Key::Left) == Action::Press {
-            translation.slide((-speed, 0., 0.));
-        } else if surface.lib_handle().get_key(Key::Right) == Action::Press {
-            translation.slide((speed, 0., 0.));
-        }
-
-        if surface.lib_handle().get_key(Key::Down) == Action::Press {
-            translation.slide((0., -speed, 0.));
-        } else if surface.lib_handle().get_key(Key::Up) == Action::Press {
-            translation.slide((0., speed, 0.));
-        }
-        */
-
+        // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
-            camera.slide((-speed, 0., 0.));
+            cam.translation.slide((move_speed, 0., 0.));
         } else if surface.lib_handle().get_key(Key::A) == Action::Press {
-            camera.slide((speed, 0., 0.));
+            cam.translation.slide((-move_speed, 0., 0.));
         }
 
         if surface.lib_handle().get_key(Key::Space) == Action::Press {
-            camera.slide((0., -speed, 0.));
+            cam.translation.slide((0., move_speed, 0.));
         } else if surface.lib_handle().get_key(Key::LeftShift) == Action::Press {
-            camera.slide((0., speed, 0.));
+            cam.translation.slide((0., -move_speed, 0.));
         }
 
         if surface.lib_handle().get_key(Key::S) == Action::Press {
-            camera.slide((0., 0., -speed));
+            cam.translation.slide((0., 0., move_speed));
         } else if surface.lib_handle().get_key(Key::W) == Action::Press {
-            camera.slide((0., 0., speed));
+            cam.translation.slide((0., 0., -move_speed));
         }
 
+        let rot_speed = 0.0030;
+
+        // Pan / pitch
+        if surface.lib_handle().get_key(Key::Left) == Action::Press {
+            cam.rotation.spin((0., rot_speed));
+        } else if surface.lib_handle().get_key(Key::Right) == Action::Press {
+            cam.rotation.spin((0., -rot_speed));
+        }
+
+        if surface.lib_handle().get_key(Key::Up) == Action::Press {
+            cam.rotation.spin((rot_speed, 0.));
+        } else if surface.lib_handle().get_key(Key::Down) == Action::Press {
+            cam.rotation.spin((-rot_speed, 0.));
+        }
+
+        // Render frame
         surface
             .pipeline_builder()
             .pipeline(&back_buffer, BLACK, |_, shd_gate| {
@@ -188,8 +192,8 @@ fn main() {
 
                     iface.time.update(elapsed as f32);
 
-                    iface.model_mat.update(translation.to_matrix().0);
-                    iface.view_mat.update(camera.to_matrix().0);
+                    iface.model_mat.update(IDENTITY.0);
+                    iface.view_mat.update(cam.to_matrix().0);
 
                     if resized {
                         println!("load proj matrix!");
@@ -206,6 +210,7 @@ fn main() {
                 });
             });
 
+        // Show the backbuffer
         surface.swap_buffers();
 
         resized = false;
@@ -216,5 +221,5 @@ fn make_proj(surface: &impl Surface) -> Projection {
     let [w, h] = surface.size();
     let (w, h) = (w as f32, h as f32);
 
-    Projection::new(70.0 * std::f32::consts::PI / 180.0, w / h, 0.1, 1000.0)
+    Projection::new(40.0 * PI / 180.0, w / h, 0.1, 1000.0)
 }
