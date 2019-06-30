@@ -2,3 +2,4 @@
 //! such as the camera.
 
 pub mod camera;
+pub mod sector;

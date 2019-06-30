@@ -6,14 +6,16 @@ use crate::maths::{
     vector::{Vec2f, Vec3f},
 };
 
-// Stores the position and rotation of a virtual camera.
-// Camera implements ``Translation`` because it is in
-// essence a compostion of transformations that create
-// the illusion of a movable camera. In reality, the
-// ``Camera`` generates a matrix that represents the
-// inverse of its transforms, and those inverse
-// transforms are applied to the world. The result
-// is an notion of player movement through the world.
+/// Stores the position and rotation of a virtual camera.
+///
+/// Camera implements ``Translation`` because it is in
+/// essence a compostion of transformations that create
+/// the illusion of a movable camera. In reality, the
+/// ``Camera`` generates a matrix that represents the
+/// inverse of its transforms, and those inverse
+/// transforms are applied to the world. The result
+/// is an notion of player movement through the world.
+#[derive(Clone, Debug)]
 pub struct Camera {
     pub translation: Translation,
     pub rotation: Rotation,

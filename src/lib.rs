@@ -1,4 +1,6 @@
 //! The core game engine is in this crate.
 
+pub mod block;
 pub mod entity;
 pub mod maths;
+pub mod vertexattrib;

@@ -1,52 +1,43 @@
-use luminance::context::GraphicsContext;
-use luminance::framebuffer::Framebuffer;
-use luminance::linear::M44;
-use luminance::render_state::RenderState;
-use luminance::shader::program::{Program, Uniform};
-use luminance::tess::{Mode, TessBuilder};
-use luminance_derive::{Semantics, UniformInterface, Vertex};
-use luminance_glfw_custom::event::{Action, Key, WindowEvent};
-use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt};
-use sandbox::entity::camera::Camera;
-use sandbox::maths::matrix::*;
-use sandbox::maths::vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f};
+use luminance::{
+    context::GraphicsContext,
+    framebuffer::Framebuffer,
+    linear::M44,
+    render_state::RenderState,
+    shader::program::{Program, Uniform},
+    tess::{Mode, TessBuilder},
+};
+use luminance_derive::UniformInterface;
+use luminance_glfw_custom::{
+    event::{Action, Key, WindowEvent},
+    surface::{GlfwSurface, Surface, WindowDim, WindowOpt},
+};
+use sandbox::{
+    entity::camera::Camera,
+    maths::{
+        matrix::{Projection, Transform, IDENTITY},
+        vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
+    },
+    vertexattrib::{ColorAttrib, PosAttrib, Semantic, VoxelVertex},
+};
 use std::{f32::consts::PI, time::Instant};
-
-// TODO: Group imports, fix globs.
 
 const VS: &'static str = include_str!("vs.glsl");
 const FS: &'static str = include_str!("fs.glsl");
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Semantics)]
-pub enum Semantic {
-    #[sem(name = "pos", repr = "[f32; 3]", type_name = "PosAttrib")]
-    Pos,
-
-    #[sem(name = "color", repr = "[f32; 3]", type_name = "ColorAttrib")]
-    Color,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Vertex)]
-#[vertex(sem = "Semantic")]
-struct Vertex {
-    pos: PosAttrib,
-    color: ColorAttrib,
-}
-
-const VERTICES: [Vertex; 4] = [
-    Vertex {
+const VERTICES: [VoxelVertex; 4] = [
+    VoxelVertex {
         pos: PosAttrib::new([0.0, 0.0, 0.0]),
         color: ColorAttrib::new([1., 0., 0.]),
     },
-    Vertex {
+    VoxelVertex {
         pos: PosAttrib::new([1.0, 0.0, 0.0]),
         color: ColorAttrib::new([0., 1., 0.]),
     },
-    Vertex {
+    VoxelVertex {
         pos: PosAttrib::new([0.5, 0.0, 0.87]),
         color: ColorAttrib::new([0., 0., 1.]),
     },
-    Vertex {
+    VoxelVertex {
         pos: PosAttrib::new([0.5, 0.5, 0.435]),
         color: ColorAttrib::new([1., 1., 1.]),
     },
@@ -99,7 +90,7 @@ fn main() {
 
     let mut surface = GlfwSurface::new(
         WindowDim::Windowed(960, 540),
-        "Hello, world!",
+        "sandbox",
         WindowOpt::default(),
     )
     .expect("GLFW surface creation!");
