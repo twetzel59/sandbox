@@ -9,3 +9,4 @@ glfw = "0.23"
 luminance = { git = "https://github.com/phaazon/luminance-rs.git" }
 luminance-glfw-custom = { git = "https://github.com/twetzel59/luminance-glfw-custom.git" }
 luminance-derive = { git = "https://github.com/phaazon/luminance-rs.git" }
+png = "0.14.1"

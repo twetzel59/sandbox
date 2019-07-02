@@ -17,6 +17,7 @@ use sandbox::{
         matrix::{Projection, Transform, IDENTITY},
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
     },
+    resource::ResourceManager,
     vertexattrib::{ColorAttrib, PosAttrib, Semantic, VoxelVertex},
 };
 use std::{f32::consts::PI, time::Instant};
@@ -94,6 +95,8 @@ fn main() {
         WindowOpt::default(),
     )
     .expect("GLFW surface creation!");
+
+    let res_mgr = ResourceManager::load_all(&mut surface);
 
     let (program, _) = Program::<Semantic, (), ShaderInterface>::from_strings(None, VS, None, FS)
         .expect("program creation");
