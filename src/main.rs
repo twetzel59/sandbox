@@ -2,9 +2,12 @@ use luminance::{
     context::GraphicsContext,
     framebuffer::Framebuffer,
     linear::M44,
+    pipeline::BoundTexture,
+    pixel::Floating,
     render_state::RenderState,
     shader::program::{Program, Uniform},
     tess::{Mode, TessBuilder},
+    texture::{Dim2, Flat},
 };
 use luminance_derive::UniformInterface;
 use luminance_glfw_custom::{
@@ -18,7 +21,7 @@ use sandbox::{
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
     },
     resource::ResourceManager,
-    vertexattrib::{ColorAttrib, PosAttrib, Semantic, VoxelVertex},
+    vertexattrib::{PosAttrib, Semantic, UvAttrib, VoxelVertex},
 };
 use std::{f32::consts::PI, time::Instant};
 
@@ -28,19 +31,19 @@ const FS: &'static str = include_str!("fs.glsl");
 const VERTICES: [VoxelVertex; 4] = [
     VoxelVertex {
         pos: PosAttrib::new([0.0, 0.0, 0.0]),
-        color: ColorAttrib::new([1., 0., 0.]),
+        uv: UvAttrib::new([1., 0.]),
     },
     VoxelVertex {
         pos: PosAttrib::new([1.0, 0.0, 0.0]),
-        color: ColorAttrib::new([0., 1., 0.]),
+        uv: UvAttrib::new([0., 0.]),
     },
     VoxelVertex {
         pos: PosAttrib::new([0.5, 0.0, 0.87]),
-        color: ColorAttrib::new([0., 0., 1.]),
+        uv: UvAttrib::new([0., 1.]),
     },
     VoxelVertex {
         pos: PosAttrib::new([0.5, 0.5, 0.435]),
-        color: ColorAttrib::new([1., 1., 1.]),
+        uv: UvAttrib::new([1., 1.]),
     },
 ];
 
@@ -54,12 +57,13 @@ const INDICES: [u32; 12] = [
 const BLACK: [f32; 4] = [0., 0., 0., 0.];
 //const WHITE: [f32; 4] = [1., 1., 1., 0.];
 
-#[derive(Debug, UniformInterface)]
+#[derive(UniformInterface)]
 struct ShaderInterface {
-    time: Uniform<f32>,
+    //time: Uniform<f32>,
     model_mat: Uniform<M44>,
     view_mat: Uniform<M44>,
     projection_mat: Uniform<M44>,
+    terrain_texture: Uniform<&'static BoundTexture<'static, Flat, Dim2, Floating>>,
 }
 
 fn main() {
@@ -97,6 +101,7 @@ fn main() {
     .expect("GLFW surface creation!");
 
     let res_mgr = ResourceManager::load_all(&mut surface);
+    let terrain_tex = res_mgr.texture_mgr().terrain();
 
     let (program, _) = Program::<Semantic, (), ShaderInterface>::from_strings(None, VS, None, FS)
         .expect("program creation");
@@ -178,16 +183,19 @@ fn main() {
         // Render frame
         surface
             .pipeline_builder()
-            .pipeline(&back_buffer, BLACK, |_, shd_gate| {
+            .pipeline(&back_buffer, BLACK, |pipe, shd_gate| {
+                let bound_terrain_tex = pipe.bind_texture(terrain_tex.inner());
+                
                 shd_gate.shade(&program, |rdr_gate, iface| {
-                    let elapsed = Instant::now() - start_time;
-                    let elapsed =
-                        elapsed.as_secs() as f64 + (elapsed.subsec_millis() as f64 * 1e-3);
+                    //let elapsed = Instant::now() - start_time;
+                    //let elapsed =
+                    //    elapsed.as_secs() as f64 + (elapsed.subsec_millis() as f64 * 1e-3);
 
-                    iface.time.update(elapsed as f32);
+                    //iface.time.update(elapsed as f32);
 
                     iface.model_mat.update(IDENTITY.0);
                     iface.view_mat.update(cam.to_matrix().0);
+                    iface.terrain_texture.update(&bound_terrain_tex);
 
                     if resized {
                         println!("load proj matrix!");

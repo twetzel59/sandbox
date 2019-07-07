@@ -11,7 +11,7 @@ pub const SECTOR_LEN: usize = SECTOR_DIM * SECTOR_DIM * SECTOR_DIM;
 
 /// Represents a position relative to the back lower left of a sector.
 ///
-/// Each pair of integers maps to one voxel.
+/// Each triplet of integers maps to one voxel.
 ///
 /// TODO: make sure the z axis is not inverted.
 #[derive(Clone, Copy, Debug)]

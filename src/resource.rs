@@ -37,12 +37,23 @@ impl ResourceManager {
             textures: TextureManager::load_all(ctx),
         }
     }
+    
+    /// Return a reference to the ``TextureManager`` for this
+    /// parent resource manager.
+    pub fn texture_mgr(&self) -> &TextureManager {
+        &self.textures
+    }
 }
 
 /// A texture manager.
 ///
 /// This ``struct`` owns all textures that are used by the
 /// game during runtime.
+///
+/// Each texture stored in the manager is behind a ``Rc``.
+/// Obtaining a reference to the texture thus requires a
+/// reference count update, but it is not horribly expensive
+/// since the update is non-atomic.
 pub struct TextureManager {
     terrain_tex: Rc<Texture2D>,
 }
@@ -72,6 +83,10 @@ impl TextureManager {
         TextureManager {
             terrain_tex: Rc::new(Texture2D::with_path(ctx, terrain_path, &sampler)),
         }
+    }
+    
+    pub fn terrain(&self) -> Rc<Texture2D> {
+        Rc::clone(&self.terrain_tex)
     }
 }
 
@@ -125,6 +140,11 @@ impl Texture2D {
         let file = File::open(path).unwrap();
         Self::from_file(ctx, file, sampler)
     }
+    
+    /// Return the low-level inner ``luminance`` texture.
+    pub fn inner(&self) -> &Tex2DInner {
+        &self.inner
+    }
 }
 
 /// Load a PNG image from the given ``File``.
@@ -157,6 +177,8 @@ where
     }
     
     let tex = Tex2DInner::new(ctx, [info.width, info.height], 0, sampler).unwrap();
+    
+    tex.upload(false, &image);
     
     (tex, info)
 }

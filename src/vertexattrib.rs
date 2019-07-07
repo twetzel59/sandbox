@@ -13,7 +13,7 @@ pub enum Semantic {
     #[sem(name = "pos", repr = "[f32; 3]", type_name = "PosAttrib")]
     Pos,
 
-    #[sem(name = "color", repr = "[f32; 3]", type_name = "ColorAttrib")]
+    #[sem(name = "uv", repr = "[f32; 2]", type_name = "UvAttrib")]
     Color,
 }
 
@@ -21,5 +21,5 @@ pub enum Semantic {
 #[vertex(sem = "Semantic")]
 pub struct VoxelVertex {
     pub pos: PosAttrib,
-    pub color: ColorAttrib,
+    pub uv: UvAttrib,
 }
