@@ -15,7 +15,7 @@ pub const SECTOR_LEN: usize = SECTOR_DIM * SECTOR_DIM * SECTOR_DIM;
 ///
 /// TODO: make sure the z axis is not inverted.
 #[derive(Clone, Copy, Debug)]
-pub struct SectorCoords(usize, usize, usize);
+pub struct SectorCoords(pub usize, pub usize, pub usize);
 
 /// Holds the voxel data for a sector.
 pub struct SectorData {
@@ -31,7 +31,7 @@ impl SectorData {
     }
 
     /// Generate a ``SectorData`` filled halfway with stone.
-    pub fn test(coords: SectorCoords) -> SectorData {
+    pub fn test() -> SectorData {
         let mut data = SectorData::new();
 
         for x in 0..SECTOR_DIM {
@@ -61,6 +61,6 @@ impl SectorData {
     fn index(sector_coords: SectorCoords) -> usize {
         let SectorCoords(x, y, z) = sector_coords;
 
-        x + y * SECTOR_LEN + z * SECTOR_LEN * SECTOR_LEN
+        x + y * SECTOR_DIM + z * SECTOR_DIM * SECTOR_DIM
     }
 }

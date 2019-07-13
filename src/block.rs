@@ -1,7 +1,7 @@
 //! Provides the building blocks and materials for the game.
 
 /// All types of voxels in the game.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Block {
     Air,
     Stone,

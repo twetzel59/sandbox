@@ -1,5 +1,6 @@
 use luminance::{
     context::GraphicsContext,
+    face_culling::FaceCulling,
     framebuffer::Framebuffer,
     linear::M44,
     pipeline::BoundTexture,
@@ -15,7 +16,7 @@ use luminance_glfw_custom::{
     surface::{GlfwSurface, Surface, WindowDim, WindowOpt},
 };
 use sandbox::{
-    entity::camera::Camera,
+    entity::{camera::Camera, sector::Sector},
     maths::{
         matrix::{Projection, Transform, IDENTITY},
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
@@ -28,6 +29,7 @@ use std::{f32::consts::PI, time::Instant};
 const VS: &'static str = include_str!("vs.glsl");
 const FS: &'static str = include_str!("fs.glsl");
 
+/*
 const VERTICES: [VoxelVertex; 4] = [
     VoxelVertex {
         pos: PosAttrib::new([0.0, 0.0, 0.0]),
@@ -53,6 +55,7 @@ const INDICES: [u32; 12] = [
     3, 1, 2, // side
     3, 2, 0, //side
 ];
+*/
 
 const BLACK: [f32; 4] = [0., 0., 0., 0.];
 //const WHITE: [f32; 4] = [1., 1., 1., 0.];
@@ -67,7 +70,7 @@ struct ShaderInterface {
 }
 
 fn main() {
-    // Informal tests of math.
+    // Informal tests of math
     let v = Vec2f::new(1., 1.);
     println!("{} -> {}", v.mag_sq(), v.mag());
     println!("{:?}", v + Vec2f::new(-1., 3.));
@@ -93,6 +96,7 @@ fn main() {
     v4 *= 3.0;
     println!("{:?}", v4);
 
+    // Window creation
     let mut surface = GlfwSurface::new(
         WindowDim::Windowed(960, 540),
         "sandbox",
@@ -100,25 +104,34 @@ fn main() {
     )
     .expect("GLFW surface creation!");
 
+    // Resource loading
     let res_mgr = ResourceManager::load_all(&mut surface);
     let terrain_tex = res_mgr.texture_mgr().terrain();
 
+    // Shader compilation
     let (program, _) = Program::<Semantic, (), ShaderInterface>::from_strings(None, VS, None, FS)
         .expect("program creation");
 
-    let indexed_triangles = TessBuilder::new(&mut surface)
-        .add_vertices(VERTICES)
-        .set_indices(INDICES)
-        .set_mode(Mode::Triangle)
-        .build()
-        .unwrap();
+    //let indexed_triangles = TessBuilder::new(&mut surface)
+    //    .add_vertices(VERTICES)
+    //    .set_indices(INDICES)
+    //    .set_mode(Mode::Triangle)
+    //    .build()
+    //    .unwrap();
 
+    // Camera and view
     let mut cam = Camera::at_origin();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
-    let mut back_buffer = Framebuffer::back_buffer(surface.size());
-    let start_time = Instant::now();
+    // Create a test sector and generate its mesh
+    let mut test_sector = Sector::test();
+    test_sector.gen_geometry(&mut surface);
 
+    // Framebuffer
+    let mut back_buffer = Framebuffer::back_buffer(surface.size());
+
+    // Track runtime and window resize
+    let start_time = Instant::now();
     let mut resized = true;
     'game: loop {
         // Poll events
@@ -144,7 +157,7 @@ fn main() {
             proj_mat = make_proj(&surface).to_matrix();
         }
 
-        let move_speed = 0.0025;
+        let move_speed = 0.05;
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
@@ -165,7 +178,7 @@ fn main() {
             cam.translation.slide((0., 0., -move_speed));
         }
 
-        let rot_speed = 0.0030;
+        let rot_speed = 0.012;
 
         // Pan / pitch
         if surface.lib_handle().get_key(Key::Left) == Action::Press {
@@ -185,7 +198,7 @@ fn main() {
             .pipeline_builder()
             .pipeline(&back_buffer, BLACK, |pipe, shd_gate| {
                 let bound_terrain_tex = pipe.bind_texture(terrain_tex.inner());
-                
+
                 shd_gate.shade(&program, |rdr_gate, iface| {
                     //let elapsed = Instant::now() - start_time;
                     //let elapsed =
@@ -203,11 +216,11 @@ fn main() {
                         iface.projection_mat.update(proj_mat.0);
                     }
 
-                    let state = RenderState::default();
-                    //.set_face_culling(FaceCulling::default());
+                    let state = RenderState::default().set_face_culling(FaceCulling::default());
 
                     rdr_gate.render(state, |tess_gate| {
-                        tess_gate.render(&mut surface, (&indexed_triangles).into());
+                        //tess_gate.render(&mut surface, (&indexed_triangles).into());
+                        tess_gate.render(&mut surface, test_sector.test_force_geometry().into());
                     });
                 });
             });
