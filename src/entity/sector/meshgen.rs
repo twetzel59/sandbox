@@ -26,16 +26,18 @@ use std::ops::{Add, Mul, Neg};
 // a single face of a cube block.
 struct Face {
     positions: [usize; 4], // Indices into the POSITIONS constant.
-    flip_tex: bool,        // Whether to flip the U coords.
+    flip_u: bool,          // Whether to flip the U coords.
+    flip_v: bool,          // Whether to flip the V coords.
     u_idx: usize,          // Does the U coord correspond to X, Y, or Z?
     v_idx: usize,          // Does the V coord correspond to X, Y, or Z?
 }
 
 impl Face {
-    const fn new(positions: [usize; 4], flip_tex: bool, u_idx: usize, v_idx: usize) -> Face {
+    const fn new(positions: [usize; 4], flip_u: bool, flip_v: bool, u_idx: usize, v_idx: usize) -> Face {
         Face {
             positions,
-            flip_tex,
+            flip_u,
+            flip_v,
             u_idx,
             v_idx,
         }
@@ -43,11 +45,13 @@ impl Face {
 }
 
 #[rustfmt::skip]
-const FACES: [Face; 4] = [
-    Face::new([4, 5, 6, 7], false, 0, 1), // front
-    Face::new([3, 2, 1, 0], true,  0, 1), // back
-    Face::new([2, 6, 5, 1], true,  2, 1), // right side
-    Face::new([7, 3, 0, 4], false, 2, 1), // left side
+const FACES: [Face; 6] = [
+    Face::new([4, 5, 6, 7], false, false, 0, 1), // front
+    Face::new([3, 2, 1, 0], true,  false, 0, 1), // back
+    Face::new([2, 6, 5, 1], true,  false, 2, 1), // right side
+    Face::new([7, 3, 0, 4], false, false, 2, 1), // left side
+    Face::new([7, 6, 2, 3], false, true,  0, 2), // top
+    Face::new([0, 1, 5, 4], false, false, 0, 2), // bottom
 ];
 
 const POSITIONS: [[f32; 3]; 8] = [
@@ -92,7 +96,8 @@ pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Optio
                                 pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
                                 uv: UvAttrib::new(tex_coord(
                                     POSITIONS[v],
-                                    f.flip_tex,
+                                    f.flip_u,
+                                    f.flip_v,
                                     f.u_idx,
                                     f.v_idx,
                                 )),
@@ -139,12 +144,13 @@ where
 
 // Returns the tex coord for a vertex at the given position.
 #[rustfmt::skip]
-fn tex_coord<T>(orig: [T; 3], flip_tex: bool, u_idx: usize, v_idx: usize) -> [T; 2]
+fn tex_coord<T>(orig: [T; 3], flip_u: bool, flip_v: bool, u_idx: usize, v_idx: usize) -> [T; 2]
 where
     T: Copy + Add<f32, Output = T> + Neg<Output = T>,
 {
-    let u = if flip_tex { -orig[u_idx] + 1. } else { orig[u_idx] };
-    let v = -orig[v_idx] + 1.;
+    let u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
+    let v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
+    // V is reversed since textures have an inverted y-axis.
 
     [u, v]
 }
