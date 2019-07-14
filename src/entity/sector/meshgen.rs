@@ -7,7 +7,7 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::data::{SectorCoords, SectorData, SECTOR_DIM};
+use super::data::{Neighbor, SectorCoords, SectorData, SECTOR_DIM};
 use crate::{
     block::Block,
     vertexattrib::{PosAttrib, UvAttrib, VoxelVertex},
@@ -25,6 +25,7 @@ use std::ops::{Add, Mul, Neg};
 // Stores all information needed to represent
 // a single face of a cube block.
 struct Face {
+    neighbor: Neighbor,    // What other block is adjacent to this face?
     positions: [usize; 4], // Indices into the POSITIONS constant.
     flip_u: bool,          // Whether to flip the U coords.
     flip_v: bool,          // Whether to flip the V coords.
@@ -33,8 +34,16 @@ struct Face {
 }
 
 impl Face {
-    const fn new(positions: [usize; 4], flip_u: bool, flip_v: bool, u_idx: usize, v_idx: usize) -> Face {
+    const fn new(
+        neighbor: Neighbor,
+        positions: [usize; 4],
+        flip_u: bool,
+        flip_v: bool,
+        u_idx: usize,
+        v_idx: usize,
+    ) -> Face {
         Face {
+            neighbor,
             positions,
             flip_u,
             flip_v,
@@ -46,12 +55,12 @@ impl Face {
 
 #[rustfmt::skip]
 const FACES: [Face; 6] = [
-    Face::new([4, 5, 6, 7], false, false, 0, 1), // front
-    Face::new([3, 2, 1, 0], true,  false, 0, 1), // back
-    Face::new([2, 6, 5, 1], true,  false, 2, 1), // right side
-    Face::new([7, 3, 0, 4], false, false, 2, 1), // left side
-    Face::new([7, 6, 2, 3], false, true,  0, 2), // top
-    Face::new([0, 1, 5, 4], false, false, 0, 2), // bottom
+    Face::new(Neighbor::Front,     [4, 5, 6, 7], false, false, 0, 1), // front
+    Face::new(Neighbor::Back,      [3, 2, 1, 0], true,  false, 0, 1), // back
+    Face::new(Neighbor::RightSide, [2, 6, 5, 1], true,  false, 2, 1), // right side
+    Face::new(Neighbor::LeftSide,  [7, 3, 0, 4], false, false, 2, 1), // left side
+    Face::new(Neighbor::Top,       [7, 6, 2, 3], false, true,  0, 2), // top
+    Face::new(Neighbor::Bottom,    [0, 1, 5, 4], false, false, 0, 2), // bottom
 ];
 
 const POSITIONS: [[f32; 3]; 8] = [
@@ -89,6 +98,15 @@ pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Optio
                     let factors = (x as f32, y as f32, z as f32);
 
                     for f in &FACES {
+                        if let Some(adj_coords) = coords.neighbor(f.neighbor) {
+                            let adj_block = voxels.block(adj_coords);
+                            
+                            if !adj_block.is_transparent() {
+                                println!("skip!: {:?}", coords);
+                                //break;
+                            }
+                        }
+                        
                         for v in &f.positions {
                             let v = *v;
 

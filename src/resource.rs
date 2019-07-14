@@ -61,7 +61,7 @@ pub struct TextureManager {
 impl TextureManager {
     const TEXTURE_PATH: &'static str = "tex";
 
-    const TERRAIN: &'static str = "terrain.png";
+    const TERRAIN: &'static str = "limestone.png";
 
     /// Load all textures and store them in a new
     /// ``TextureManager`` instance.

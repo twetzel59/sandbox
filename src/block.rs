@@ -7,6 +7,18 @@ pub enum Block {
     Stone,
 }
 
+impl Block {
+    /// Returns ``true`` if the block is transparent.
+    pub fn is_transparent(self) -> bool {
+        use Block::*;
+        
+        match self {
+            Air => true,
+            Stone => false,
+        }
+    }
+}
+
 impl Default for Block {
     fn default() -> Block {
         Block::Air
