@@ -22,6 +22,34 @@ use std::ops::{Add, Mul, Neg};
 // OpenGL model units.
 // const EDGE_LEN: f32 = 1.;
 
+// Stores all information needed to represent
+// a single face of a cube block.
+struct Face {
+    positions: [usize; 4], // Indices into the POSITIONS constant.
+    flip_tex: bool,        // Whether to flip the U coords.
+    u_idx: usize,          // Does the U coord correspond to X, Y, or Z?
+    v_idx: usize,          // Does the V coord correspond to X, Y, or Z?
+}
+
+impl Face {
+    const fn new(positions: [usize; 4], flip_tex: bool, u_idx: usize, v_idx: usize) -> Face {
+        Face {
+            positions,
+            flip_tex,
+            u_idx,
+            v_idx,
+        }
+    }
+}
+
+#[rustfmt::skip]
+const FACES: [Face; 4] = [
+    Face::new([4, 5, 6, 7], false, 0, 1), // front
+    Face::new([3, 2, 1, 0], true,  0, 1), // back
+    Face::new([2, 6, 5, 1], true,  2, 1), // right side
+    Face::new([7, 3, 0, 4], false, 2, 1), // left side
+];
+
 const POSITIONS: [[f32; 3]; 8] = [
     [0., 0., 0.],
     [1., 0., 0.],
@@ -56,35 +84,31 @@ pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Optio
 
                     let factors = (x as f32, y as f32, z as f32);
 
-                    vertices.push(VoxelVertex {
-                        pos: PosAttrib::new(translate3(POSITIONS[0], factors)),
-                        uv: UvAttrib::new(tex_coord(POSITIONS[0])),
-                    });
+                    for f in &FACES {
+                        for v in &f.positions {
+                            let v = *v;
 
-                    vertices.push(VoxelVertex {
-                        pos: PosAttrib::new(translate3(POSITIONS[1], factors)),
-                        uv: UvAttrib::new(tex_coord(POSITIONS[1])),
-                    });
+                            vertices.push(VoxelVertex {
+                                pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
+                                uv: UvAttrib::new(tex_coord(
+                                    POSITIONS[v],
+                                    f.flip_tex,
+                                    f.u_idx,
+                                    f.v_idx,
+                                )),
+                            });
+                        }
 
-                    vertices.push(VoxelVertex {
-                        pos: PosAttrib::new(translate3(POSITIONS[2], factors)),
-                        uv: UvAttrib::new(tex_coord(POSITIONS[2])),
-                    });
+                        indices.push(current_index);
+                        indices.push(current_index + 1);
+                        indices.push(current_index + 2);
 
-                    vertices.push(VoxelVertex {
-                        pos: PosAttrib::new(translate3(POSITIONS[3], factors)),
-                        uv: UvAttrib::new(tex_coord(POSITIONS[3])),
-                    });
+                        indices.push(current_index);
+                        indices.push(current_index + 2);
+                        indices.push(current_index + 3);
 
-                    indices.push(current_index);
-                    indices.push(current_index + 1);
-                    indices.push(current_index + 2);
-
-                    indices.push(current_index);
-                    indices.push(current_index + 2);
-                    indices.push(current_index + 3);
-
-                    current_index += 4;
+                        current_index += 4;
+                    }
                 }
             }
         }
@@ -114,9 +138,13 @@ where
 }
 
 // Returns the tex coord for a vertex at the given position.
-fn tex_coord<T>(orig: [T; 3]) -> [T; 2]
+#[rustfmt::skip]
+fn tex_coord<T>(orig: [T; 3], flip_tex: bool, u_idx: usize, v_idx: usize) -> [T; 2]
 where
     T: Copy + Add<f32, Output = T> + Neg<Output = T>,
 {
-    [orig[0], -orig[1] + 1.]
+    let u = if flip_tex { -orig[u_idx] + 1. } else { orig[u_idx] };
+    let v = -orig[v_idx] + 1.;
+
+    [u, v]
 }
