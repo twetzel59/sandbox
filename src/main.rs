@@ -124,7 +124,7 @@ fn main() {
     let mut proj_mat = make_proj(&surface).to_matrix();
 
     // Create a test sector and generate its mesh
-    let mut test_sector = Sector::test();
+    let mut test_sector = Sector::test((0, 0, 0));
     test_sector.gen_geometry(&mut surface);
 
     // Framebuffer
@@ -161,36 +161,36 @@ fn main() {
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
-            cam.translation.slide((move_speed, 0., 0.));
+            cam.slide((move_speed, 0., 0.));
         } else if surface.lib_handle().get_key(Key::A) == Action::Press {
-            cam.translation.slide((-move_speed, 0., 0.));
+            cam.slide((-move_speed, 0., 0.));
         }
 
         if surface.lib_handle().get_key(Key::Space) == Action::Press {
-            cam.translation.slide((0., move_speed, 0.));
+            cam.slide((0., move_speed, 0.));
         } else if surface.lib_handle().get_key(Key::LeftShift) == Action::Press {
-            cam.translation.slide((0., -move_speed, 0.));
+            cam.slide((0., -move_speed, 0.));
         }
 
         if surface.lib_handle().get_key(Key::S) == Action::Press {
-            cam.translation.slide((0., 0., move_speed));
+            cam.slide((0., 0., move_speed));
         } else if surface.lib_handle().get_key(Key::W) == Action::Press {
-            cam.translation.slide((0., 0., -move_speed));
+            cam.slide((0., 0., -move_speed));
         }
 
         let rot_speed = 0.012;
 
         // Pan / pitch
         if surface.lib_handle().get_key(Key::Left) == Action::Press {
-            cam.rotation.spin((0., rot_speed));
+            cam.spin((0., rot_speed));
         } else if surface.lib_handle().get_key(Key::Right) == Action::Press {
-            cam.rotation.spin((0., -rot_speed));
+            cam.spin((0., -rot_speed));
         }
 
         if surface.lib_handle().get_key(Key::Up) == Action::Press {
-            cam.rotation.spin((rot_speed, 0.));
+            cam.spin((rot_speed, 0.));
         } else if surface.lib_handle().get_key(Key::Down) == Action::Press {
-            cam.rotation.spin((-rot_speed, 0.));
+            cam.spin((-rot_speed, 0.));
         }
 
         // Render frame
@@ -206,7 +206,7 @@ fn main() {
 
                     //iface.time.update(elapsed as f32);
 
-                    iface.model_mat.update(IDENTITY.0);
+                    iface.model_mat.update(test_sector.translation().0);
                     iface.view_mat.update(cam.to_matrix().0);
                     iface.terrain_texture.update(&bound_terrain_tex);
 
