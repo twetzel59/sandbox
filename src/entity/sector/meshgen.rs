@@ -102,8 +102,8 @@ pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Optio
                             let adj_block = voxels.block(adj_coords);
                             
                             if !adj_block.is_transparent() {
-                                println!("skip!: {:?}", coords);
-                                //break;
+                                //println!("skip!: {:?}", coords);
+                                continue;
                             }
                         }
                         
