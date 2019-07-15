@@ -1,3 +1,4 @@
+use glfw::{Action, CursorMode, Key, WindowEvent};
 use luminance::{
     context::GraphicsContext,
     face_culling::FaceCulling,
@@ -11,10 +12,7 @@ use luminance::{
     texture::{Dim2, Flat},
 };
 use luminance_derive::UniformInterface;
-use luminance_glfw_custom::{
-    event::{Action, Key, WindowEvent},
-    surface::{GlfwSurface, Surface, WindowDim, WindowOpt},
-};
+use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt};
 use sandbox::{
     entity::{camera::Camera, sector::Sector},
     maths::{
@@ -104,6 +102,9 @@ fn main() {
     )
     .expect("GLFW surface creation!");
 
+    // Set the correct mouse mode.
+    surface.lib_handle_mut().set_cursor_mode(CursorMode::Disabled);
+
     // Resource loading
     let res_mgr = ResourceManager::load_all(&mut surface);
     let terrain_tex = res_mgr.texture_mgr().terrain();
@@ -180,7 +181,8 @@ fn main() {
 
         let rot_speed = 0.012;
 
-        // Pan / pitch
+        // Pan / pitch with arrow keys
+
         if surface.lib_handle().get_key(Key::Left) == Action::Press {
             cam.spin((0., rot_speed));
         } else if surface.lib_handle().get_key(Key::Right) == Action::Press {
@@ -192,6 +194,20 @@ fn main() {
         } else if surface.lib_handle().get_key(Key::Down) == Action::Press {
             cam.spin((-rot_speed, 0.));
         }
+        
+        // Pan / pitch with mouse
+        
+        let mouse_speed = 0.002;
+        
+        //println!("{:?}", surface.lib_handle().get_cursor_pos());
+        
+        let mouse_delta = surface.lib_handle().get_cursor_pos();
+        
+        // swap x and y
+        let cam_delta = (-mouse_delta.1 as f32 * mouse_speed, -mouse_delta.0 as f32 * mouse_speed);
+        cam.spin(cam_delta);
+        
+        surface.lib_handle_mut().set_cursor_pos(0., 0.);
 
         // Render frame
         surface

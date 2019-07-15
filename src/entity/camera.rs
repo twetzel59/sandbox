@@ -45,24 +45,24 @@ impl Camera {
     pub fn at_origin() -> Camera {
         Self::with_pos((0., 0., 0.))
     }
-    
+
     /// Move the camera by the given delta.
     pub fn slide(&mut self, delta: impl Into<Vec3f>) {
         self.translation.offset += delta.into();
     }
-    
+
     /// Rotate the camera by the given delta.
     /// The pitch will be clamped to prevent
     /// obtuse viewing angles.
     pub fn spin(&mut self, delta: impl Into<Vec2f>) {
         self.rotation.tilt += delta.into();
-        
+
         if self.rotation.tilt.x < -FRAC_PI_2 {
             self.rotation.tilt.x = -FRAC_PI_2;
         } else if self.rotation.tilt.x > FRAC_PI_2 {
             self.rotation.tilt.x = FRAC_PI_2;
         }
-        
+
         if self.rotation.tilt.y < 0. {
             self.rotation.tilt.y += 2. * PI;
         } else if self.rotation.tilt.y >= 2. * PI {
