@@ -22,7 +22,10 @@ use sandbox::{
     resource::ResourceManager,
     vertexattrib::{PosAttrib, Semantic, UvAttrib, VoxelVertex},
 };
-use std::{f32::consts::PI, time::Instant};
+use std::{
+    f32::consts::PI,
+    time::{Duration, Instant},
+};
 
 const VS: &'static str = include_str!("vs.glsl");
 const FS: &'static str = include_str!("fs.glsl");
@@ -102,8 +105,10 @@ fn main() {
     )
     .expect("GLFW surface creation!");
 
-    // Set the correct mouse mode.
-    surface.lib_handle_mut().set_cursor_mode(CursorMode::Disabled);
+    // Set the correct mouse mode
+    surface
+        .lib_handle_mut()
+        .set_cursor_mode(CursorMode::Disabled);
 
     // Resource loading
     let res_mgr = ResourceManager::load_all(&mut surface);
@@ -131,15 +136,22 @@ fn main() {
     // Framebuffer
     let mut back_buffer = Framebuffer::back_buffer(surface.size());
 
-    // Track runtime and window resize
-    let start_time = Instant::now();
+    // Track frame time and window resize
     let mut resized = true;
+    let mut frame_seconds: f64 = 0.;
     'game: loop {
+        // Start timing the frame
+        let frame_start = Instant::now();
+
         // Poll events
         for event in surface.poll_events() {
             match event {
                 WindowEvent::Close | WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
                     break 'game
+                }
+
+                WindowEvent::Key(Key::P, _, Action::Release, _) => {
+                    println!("{}", frame_seconds)
                 }
 
                 WindowEvent::FramebufferSize(width, height) => {
@@ -196,19 +208,22 @@ fn main() {
         } else if surface.lib_handle().get_key(Key::Down) == Action::Press {
             cam.spin((-rot_speed, 0.));
         }
-        
+
         // Pan / pitch with mouse
-        
-        let mouse_speed = 0.002;
-        
+
+        let mouse_speed: f64 = 0.2 * frame_seconds;
+
         //println!("{:?}", surface.lib_handle().get_cursor_pos());
-        
+
         let mouse_delta = surface.lib_handle().get_cursor_pos();
-        
+
         // swap x and y
-        let cam_delta = (-mouse_delta.1 as f32 * mouse_speed, -mouse_delta.0 as f32 * mouse_speed);
+        let cam_delta = (
+            (-mouse_delta.1 * mouse_speed) as f32,
+            (-mouse_delta.0 * mouse_speed) as f32,
+        );
         cam.spin(cam_delta);
-        
+
         surface.lib_handle_mut().set_cursor_pos(0., 0.);
 
         // Render frame
@@ -246,7 +261,12 @@ fn main() {
         // Show the backbuffer
         surface.swap_buffers();
 
+        // Reset resize flag
         resized = false;
+
+        // Calculate the time the frame took
+        let frame_time = Instant::now() - frame_start;
+        frame_seconds = frame_time.as_secs() as f64 + frame_time.subsec_nanos() as f64 * 1e-9;
     }
 }
 
