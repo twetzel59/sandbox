@@ -162,9 +162,9 @@ fn main() {
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
-            cam.slide((move_speed, 0., 0.));
+            cam.move_x(move_speed);
         } else if surface.lib_handle().get_key(Key::A) == Action::Press {
-            cam.slide((-move_speed, 0., 0.));
+            cam.move_x(-move_speed);
         }
 
         if surface.lib_handle().get_key(Key::Space) == Action::Press {
@@ -174,9 +174,11 @@ fn main() {
         }
 
         if surface.lib_handle().get_key(Key::S) == Action::Press {
-            cam.slide((0., 0., move_speed));
+            //cam.slide((0., 0., move_speed));
+            cam.move_z(move_speed);
         } else if surface.lib_handle().get_key(Key::W) == Action::Press {
-            cam.slide((0., 0., -move_speed));
+            //cam.slide((0., 0., -move_speed));
+            cam.move_z(-move_speed);
         }
 
         let rot_speed = 0.012;

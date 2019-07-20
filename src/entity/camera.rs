@@ -51,6 +51,24 @@ impl Camera {
         self.translation.offset += delta.into();
     }
 
+    /// Move the camera in the *relative* X direction by the given delta.
+    pub fn move_x(&mut self, delta: f32) {
+        let (_, ry) = self.rx_ry();
+        let rot = -ry;
+
+        self.translation.offset.x += delta * rot.cos();
+        self.translation.offset.z += delta * rot.sin();
+    }
+
+    /// Move the camera in the *relative* Z direction by the given delta.
+    pub fn move_z(&mut self, delta: f32) {
+        let (_, ry) = self.rx_ry();
+        let rot = FRAC_PI_2 - ry;
+
+        self.translation.offset.x += delta * rot.cos();
+        self.translation.offset.z += delta * rot.sin();
+    }
+
     /// Rotate the camera by the given delta.
     /// The pitch will be clamped to prevent
     /// obtuse viewing angles.
@@ -68,6 +86,12 @@ impl Camera {
         } else if self.rotation.tilt.y >= 2. * PI {
             self.rotation.tilt.y -= 2. * PI;
         }
+    }
+
+    /// Utility function to get the camera's X and Y rotation.
+    fn rx_ry(&self) -> (f32, f32) {
+        let tilt = self.rotation.tilt;
+        (tilt.x, tilt.y)
     }
 }
 
