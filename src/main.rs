@@ -20,6 +20,7 @@ use sandbox::{
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
     },
     resource::ResourceManager,
+    timing::Clock,
     vertexattrib::{PosAttrib, Semantic, UvAttrib, VoxelVertex},
 };
 use std::{
@@ -138,14 +139,12 @@ fn main() {
 
     // Track frame time and window resize
     let mut resized = true;
-    let mut last_time = Instant::now();
+    let mut clock = Clock::begin();
     'game: loop {
         // Handle timing
-        let now = Instant::now();
-        let delta_time = now - last_time;
-        last_time = now;
-
-        let dt = delta_time.as_secs() as f64 + delta_time.subsec_nanos() as f64 * 1e-9;
+        let dt = clock.restart_seconds();
+        
+        //std::thread::sleep(Duration::from_millis(200));
 
         // Poll events
         for event in surface.poll_events() {
@@ -155,7 +154,7 @@ fn main() {
                 }
 
                 WindowEvent::Key(Key::P, _, Action::Release, _) => {
-                    println!("{}", dt);
+                    println!("{}\t{}", 1. / dt, dt);
                 }
 
                 WindowEvent::FramebufferSize(width, height) => {
@@ -174,7 +173,7 @@ fn main() {
             proj_mat = make_proj(&surface).to_matrix();
         }
 
-        let move_speed = 0.05;
+        let move_speed = 2.0 * dt as f32;
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
