@@ -138,10 +138,14 @@ fn main() {
 
     // Track frame time and window resize
     let mut resized = true;
-    let mut frame_seconds: f64 = 0.;
+    let mut last_time = Instant::now();
     'game: loop {
-        // Start timing the frame
-        let frame_start = Instant::now();
+        // Handle timing
+        let now = Instant::now();
+        let delta_time = now - last_time;
+        last_time = now;
+
+        let dt = delta_time.as_secs() as f64 + delta_time.subsec_nanos() as f64 * 1e-9;
 
         // Poll events
         for event in surface.poll_events() {
@@ -151,7 +155,7 @@ fn main() {
                 }
 
                 WindowEvent::Key(Key::P, _, Action::Release, _) => {
-                    println!("{}", frame_seconds)
+                    println!("{}", dt);
                 }
 
                 WindowEvent::FramebufferSize(width, height) => {
@@ -211,11 +215,12 @@ fn main() {
 
         // Pan / pitch with mouse
 
-        let mouse_speed: f64 = 0.2 * frame_seconds;
+        let mouse_speed: f64 = 0.002;
 
         //println!("{:?}", surface.lib_handle().get_cursor_pos());
 
         let mouse_delta = surface.lib_handle().get_cursor_pos();
+        surface.lib_handle_mut().set_cursor_pos(0., 0.);
 
         // swap x and y
         let cam_delta = (
@@ -223,8 +228,6 @@ fn main() {
             (-mouse_delta.0 * mouse_speed) as f32,
         );
         cam.spin(cam_delta);
-
-        surface.lib_handle_mut().set_cursor_pos(0., 0.);
 
         // Render frame
         surface
@@ -263,10 +266,6 @@ fn main() {
 
         // Reset resize flag
         resized = false;
-
-        // Calculate the time the frame took
-        let frame_time = Instant::now() - frame_start;
-        frame_seconds = frame_time.as_secs() as f64 + frame_time.subsec_nanos() as f64 * 1e-9;
     }
 }
 
