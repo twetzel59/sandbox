@@ -130,10 +130,115 @@ impl SectorData {
         &mut self.blocks[idx]
     }
 
+    /// Iterate over the entries of the ``SectorData``.
+    pub fn iter(&self) -> SectorIter<'_> {
+        self.into_iter()
+    }
+
     /// Determine the array index of a particular voxel coordinate.
     fn index(sector_coords: SectorCoords) -> usize {
         let SectorCoords(x, y, z) = sector_coords;
 
         x + y * SECTOR_DIM + z * SECTOR_DIM * SECTOR_DIM
     }
+
+    // Determine the sector coordinates that correspond to a
+    // particular array index.
+    fn coords(idx: usize) -> SectorCoords {
+        let mut remaining = idx;
+
+        let z = remaining / (SECTOR_DIM * SECTOR_DIM);
+        remaining -= z * SECTOR_DIM * SECTOR_DIM;
+
+        let y = remaining / SECTOR_DIM;
+        remaining -= y * SECTOR_DIM;
+
+        let x = remaining;
+
+        SectorCoords(x, y, z)
+    }
 }
+
+/// The type of the ``Item`` that ``SectorIter`` yields.
+pub type DataEntry<'a> = (SectorCoords, &'a Block);
+
+/// Iterates over the ``Blocks`` in a ``SectorData`` instance.
+pub struct SectorIter<'a> {
+    sector_data: &'a SectorData,
+    current: usize,
+}
+
+impl<'a> Iterator for SectorIter<'a> {
+    type Item = DataEntry<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current < SECTOR_LEN {
+            let item = (
+                SectorData::coords(self.current),
+                &self.sector_data.blocks[self.current],
+            );
+            self.current += 1;
+
+            Some(item)
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a SectorData {
+    type Item = DataEntry<'a>;
+    type IntoIter = SectorIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SectorIter {
+            sector_data: self,
+            current: 0,
+        }
+    }
+}
+
+/*
+ * Borrow checker is not happy with the nested mutable reference.
+ * The basic implementation is possible, but is it possible with
+ * only safe code, within the Iterator trait's signiture?
+ * 
+/// The type of the ``Item`` that ``SectorIterMut`` yields;
+pub type DataEntryMut<'a> = (SectorCoords, &'a mut Block);
+
+/// Iterates mutably over the ``Blocks`` in a ``SectorData`` instance.
+pub struct SectorIterMut<'a> {
+    sector_data: &'a mut SectorData,
+    current: usize,
+}
+
+impl<'a> Iterator for SectorIterMut<'a> {
+    type Item = DataEntryMut<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current < SECTOR_LEN {
+            let item = (
+                SectorData::coords(self.current),
+                self.sector_data.blocks.get_mut(self.current).unwrap(),
+            );
+            self.current += 1;
+
+            Some(item)
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a mut SectorData {
+    type Item = DataEntryMut<'a>;
+    type IntoIter = SectorIterMut<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SectorIterMut {
+            sector_data: self,
+            current: 0,
+        }
+    }
+}
+*/

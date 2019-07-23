@@ -87,52 +87,47 @@ pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Optio
     let mut indices: Vec<u32> = Vec::new();
     let mut current_index = 0;
 
-    for x in 0..SECTOR_DIM {
-        for y in 0..SECTOR_DIM {
-            for z in 0..SECTOR_DIM {
-                let coords = SectorCoords(x, y, z);
+    for (coords, blk) in voxels {
+        if *blk != Block::Air {
+            //let pos0 = [POSITIONS[0].0[0], POSITIONS[0].0[1], POSITIONS[0].0[2]];
 
-                if *voxels.block(coords) != Block::Air {
-                    //let pos0 = [POSITIONS[0].0[0], POSITIONS[0].0[1], POSITIONS[0].0[2]];
+            let SectorCoords(x, y, z) = coords;
+            let factors = (x as f32, y as f32, z as f32);
 
-                    let factors = (x as f32, y as f32, z as f32);
-
-                    for f in &FACES {
-                        if let Some(adj_coords) = coords.neighbor(f.neighbor) {
-                            let adj_block = voxels.block(adj_coords);
-                            
-                            if !adj_block.is_transparent() {
-                                //println!("skip!: {:?}", coords);
-                                continue;
-                            }
-                        }
-                        
-                        for v in &f.positions {
-                            let v = *v;
-
-                            vertices.push(VoxelVertex {
-                                pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
-                                uv: UvAttrib::new(tex_coord(
-                                    POSITIONS[v],
-                                    f.flip_u,
-                                    f.flip_v,
-                                    f.u_idx,
-                                    f.v_idx,
-                                )),
-                            });
-                        }
-
-                        indices.push(current_index);
-                        indices.push(current_index + 1);
-                        indices.push(current_index + 2);
-
-                        indices.push(current_index);
-                        indices.push(current_index + 2);
-                        indices.push(current_index + 3);
-
-                        current_index += 4;
+            for f in &FACES {
+                if let Some(adj_coords) = coords.neighbor(f.neighbor) {
+                    let adj_block = voxels.block(adj_coords);
+                    
+                    if !adj_block.is_transparent() {
+                        //println!("skip!: {:?}", coords);
+                        continue;
                     }
                 }
+                
+                for v in &f.positions {
+                    let v = *v;
+
+                    vertices.push(VoxelVertex {
+                        pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
+                        uv: UvAttrib::new(tex_coord(
+                            POSITIONS[v],
+                            f.flip_u,
+                            f.flip_v,
+                            f.u_idx,
+                            f.v_idx,
+                        )),
+                    });
+                }
+
+                indices.push(current_index);
+                indices.push(current_index + 1);
+                indices.push(current_index + 2);
+
+                indices.push(current_index);
+                indices.push(current_index + 2);
+                indices.push(current_index + 3);
+
+                current_index += 4;
             }
         }
     }
