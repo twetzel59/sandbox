@@ -16,11 +16,16 @@ use luminance::{
     context::GraphicsContext,
     tess::{Mode, Tess, TessBuilder},
 };
+use png::OutputInfo;
 use std::ops::{Add, Mul, Neg};
 
 // Visual length of the cube sides in
 // OpenGL model units.
 // const EDGE_LEN: f32 = 1.;
+
+// Square edge length of an individual
+// texture on the texture atlas in pixels.
+const TILE_SIZE: f32 = 16.;
 
 // Stores all information needed to represent
 // a single face of a cube block.
@@ -82,53 +87,59 @@ const POSITIONS: [[f32; 3]; 8] = [
 ///
 /// If, on the other hand, there are no visible voxels
 /// in the sector data, ``None`` is returned.
-pub fn gen_terrain(ctx: &mut impl GraphicsContext, voxels: &SectorData) -> Option<Tess> {
+pub fn gen_terrain(
+    ctx: &mut impl GraphicsContext,
+    tex_info: &OutputInfo,
+    voxels: &SectorData,
+) -> Option<Tess> {
     let mut vertices = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
     let mut current_index = 0;
 
     for (coords, blk) in voxels {
-        if *blk != Block::Air {
-            //let pos0 = [POSITIONS[0].0[0], POSITIONS[0].0[1], POSITIONS[0].0[2]];
+        if *blk == Block::Air {
+            continue;
+        }
 
-            let SectorCoords(x, y, z) = coords;
-            let factors = (x as f32, y as f32, z as f32);
+        let SectorCoords(x, y, z) = coords;
+        let factors = (x as f32, y as f32, z as f32);
 
-            for f in &FACES {
-                if let Some(adj_coords) = coords.neighbor(f.neighbor) {
-                    let adj_block = voxels.block(adj_coords);
-                    
-                    if !adj_block.is_transparent() {
-                        //println!("skip!: {:?}", coords);
-                        continue;
-                    }
+        for f in &FACES {
+            if let Some(adj_coords) = coords.neighbor(f.neighbor) {
+                let adj_block = voxels.block(adj_coords);
+
+                if !adj_block.is_transparent() {
+                    //println!("skip!: {:?}", coords);
+                    continue;
                 }
-                
-                for v in &f.positions {
-                    let v = *v;
-
-                    vertices.push(VoxelVertex {
-                        pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
-                        uv: UvAttrib::new(tex_coord(
-                            POSITIONS[v],
-                            f.flip_u,
-                            f.flip_v,
-                            f.u_idx,
-                            f.v_idx,
-                        )),
-                    });
-                }
-
-                indices.push(current_index);
-                indices.push(current_index + 1);
-                indices.push(current_index + 2);
-
-                indices.push(current_index);
-                indices.push(current_index + 2);
-                indices.push(current_index + 3);
-
-                current_index += 4;
             }
+
+            for v in &f.positions {
+                let v = *v;
+
+                vertices.push(VoxelVertex {
+                    pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
+                    uv: UvAttrib::new(tex_coord(
+                        tex_info,
+                        blk,
+                        POSITIONS[v],
+                        f.flip_u,
+                        f.flip_v,
+                        f.u_idx,
+                        f.v_idx,
+                    )),
+                });
+            }
+
+            indices.push(current_index);
+            indices.push(current_index + 1);
+            indices.push(current_index + 2);
+
+            indices.push(current_index);
+            indices.push(current_index + 2);
+            indices.push(current_index + 3);
+
+            current_index += 4;
         }
     }
 
@@ -157,13 +168,18 @@ where
 
 // Returns the tex coord for a vertex at the given position.
 #[rustfmt::skip]
-fn tex_coord<T>(orig: [T; 3], flip_u: bool, flip_v: bool, u_idx: usize, v_idx: usize) -> [T; 2]
-where
-    T: Copy + Add<f32, Output = T> + Neg<Output = T>,
+fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], flip_u: bool, flip_v: bool,
+             u_idx: usize, v_idx: usize) -> [f32; 2]
 {
     let u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
     let v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
     // V is reversed since textures have an inverted y-axis.
 
-    [u, v]
+    let blk_id = *blk as u32;
+    let blk_id = blk_id as f32;
+    
+    let (width, height) = (tex_info.width as f32, tex_info.height as f32);
+    
+    [(u + blk_id - 1.) * TILE_SIZE / width,
+     v * TILE_SIZE / height]
 }

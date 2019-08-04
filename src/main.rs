@@ -132,7 +132,7 @@ fn main() {
 
     // Create a test sector and generate its mesh
     let mut test_sector = Sector::test((0, 0, 0));
-    test_sector.gen_geometry(&mut surface);
+    test_sector.gen_geometry(terrain_tex.info(), &mut surface);
 
     // Framebuffer
     let mut back_buffer = Framebuffer::back_buffer(surface.size());

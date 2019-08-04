@@ -5,6 +5,7 @@
 pub enum Block {
     Air,
     Stone,
+    Grass,
 }
 
 impl Block {
@@ -14,7 +15,7 @@ impl Block {
         
         match self {
             Air => true,
-            Stone => false,
+            _ => false,
         }
     }
 }

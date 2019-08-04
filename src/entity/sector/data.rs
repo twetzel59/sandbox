@@ -113,6 +113,8 @@ impl SectorData {
 
             if y < SECTOR_DIM / 2 {
                 *blk = Block::Stone;
+            } else if y == SECTOR_DIM / 2 {
+                *blk = Block::Grass;
             }
         }
 

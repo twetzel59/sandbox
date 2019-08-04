@@ -61,7 +61,7 @@ pub struct TextureManager {
 impl TextureManager {
     const TEXTURE_PATH: &'static str = "tex";
 
-    const TERRAIN: &'static str = "limestone.png";
+    const TERRAIN: &'static str = "terrain.png";
 
     /// Load all textures and store them in a new
     /// ``TextureManager`` instance.
@@ -144,6 +144,11 @@ impl Texture2D {
     /// Return the low-level inner ``luminance`` texture.
     pub fn inner(&self) -> &Tex2DInner {
         &self.inner
+    }
+    
+    /// Return the texture info structure.
+    pub fn info(&self) -> &OutputInfo {
+        &self.info
     }
 }
 

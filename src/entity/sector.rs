@@ -14,6 +14,7 @@ mod meshgen;
 use crate::maths::matrix::{Mat4x4, Transform, Translation};
 use data::SectorData;
 use luminance::{context::GraphicsContext, tess::Tess};
+use png::OutputInfo;
 
 /// A single sector or "chunk" of the world.
 ///
@@ -67,8 +68,8 @@ impl Sector {
     /// Since this function results in a side effect in
     /// the ``luminance`` backend's state, the graphics
     /// context is needed. It is usually the GLFW window.
-    pub fn gen_geometry(&mut self, ctx: &mut impl GraphicsContext) {
-        self.geometry = meshgen::gen_terrain(ctx, &self.data);
+    pub fn gen_geometry(&mut self, texture_info: &OutputInfo, ctx: &mut impl GraphicsContext) {
+        self.geometry = meshgen::gen_terrain(ctx, texture_info, &self.data);
     }
     
     pub fn test(world_pos: (i32, i32, i32)) -> Sector {
