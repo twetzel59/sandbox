@@ -7,12 +7,10 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::{
-    data::{SectorCoords, SectorData, SECTOR_DIM},
-    Side,
-};
+use super::data::{SectorCoords, SectorData, SECTOR_DIM};
 use crate::{
     block::Block,
+    side::Side,
     vertexattrib::{PosAttrib, UvAttrib, VoxelVertex},
 };
 use luminance::{
@@ -32,19 +30,20 @@ const TILE_SIZE: f32 = 16.;
 
 // Stores all information needed to represent
 // a single face of a cube block.
+#[rustfmt::skip]
 #[derive(Clone, Debug)]
 struct Face {
-    neighbor: Side,        // What other block is adjacent to this face?
-    positions: [usize; 4], // Indices into the POSITIONS constant.
-    flip_u: bool,          // Whether to flip the U coords.
-    flip_v: bool,          // Whether to flip the V coords.
-    u_idx: usize,          // Does the U coord correspond to X, Y, or Z?
-    v_idx: usize,          // Does the V coord correspond to X, Y, or Z?
+    side: Side,             // Which side is the face on, or which block is adjacent to this face?
+    positions: [usize; 4],  // Indices into the POSITIONS constant.
+    flip_u: bool,           // Whether to flip the U coords.
+    flip_v: bool,           // Whether to flip the V coords.
+    u_idx: usize,           // Does the U coord correspond to X, Y, or Z?
+    v_idx: usize,           // Does the V coord correspond to X, Y, or Z?
 }
 
 impl Face {
     const fn new(
-        neighbor: Side,
+        side: Side,
         positions: [usize; 4],
         flip_u: bool,
         flip_v: bool,
@@ -52,7 +51,7 @@ impl Face {
         v_idx: usize,
     ) -> Face {
         Face {
-            neighbor,
+            side,
             positions,
             flip_u,
             flip_v,
@@ -133,7 +132,7 @@ pub fn gen_terrain(
         for f in &FACES {
             // Check if the neighboring block occludes the face
             // we are drawing.
-            if let Some(adj_coords) = coords.neighbor(f.neighbor) {
+            if let Some(adj_coords) = coords.neighbor(f.side) {
                 // Look up the adjacent block.
                 let adj_block = voxels.block(adj_coords);
 
@@ -265,6 +264,8 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     let u_idx = face.u_idx;
     let v_idx = face.v_idx;
     
+    let blk_side = face.side;
+    
     // Determine the texture coordinate with respect to the *tile*.
     // These values will be in the open range [0, 1].
     //
@@ -272,35 +273,16 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     let tile_u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
     let tile_v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
 
-    // Determine the block's id,
-    // and convert it to f32.
-    let blk_id = *blk as u32;
-    let blk_id = blk_id as f32;
+    // Determine the block's texture id, and convert it to a f32.
+    // For some blocks, the texture depends on which side of the
+    // block is in consideration, so the ``texture_id`` method
+    // also takes the ``side`` field from our ``Face``.
+    let blk_id = blk.texture_id(blk_side) as f32;
     
     // Query and cast the size of the entire texture atlas.
     let (width, height) = (tex_info.width as f32, tex_info.height as f32);
     
     // Select the correct corner of the tile in question.
-    [(tile_u + blk_id - 1.) * TILE_SIZE / width,
+    [(tile_u + blk_id) * TILE_SIZE / width,
      tile_v * TILE_SIZE / height]
 }
-
-/*
-// Returns the tex coord for a vertex at the given position.
-#[rustfmt::skip]
-fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], flip_u: bool, flip_v: bool,
-             u_idx: usize, v_idx: usize) -> [f32; 2]
-{
-    let u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
-    let v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
-    // V is reversed since textures have an inverted y-axis.
-
-    let blk_id = *blk as u32;
-    let blk_id = blk_id as f32;
-
-    let (width, height) = (tex_info.width as f32, tex_info.height as f32);
-
-    [(u + blk_id - 1.) * TILE_SIZE / width,
-     v * TILE_SIZE / height]
-}
-*/

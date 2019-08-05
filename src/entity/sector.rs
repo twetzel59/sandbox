@@ -84,14 +84,3 @@ impl Sector {
         Translation::new((pos.0 as f32, pos.1 as f32, pos.2 as f32)).to_matrix()
     }
 }
-
-/// Represents one of the six faces on the cube.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Side {
-    Front,
-    Back,
-    RightSide,
-    LeftSide,
-    Top,
-    Bottom,
-}

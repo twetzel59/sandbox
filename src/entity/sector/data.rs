@@ -1,8 +1,10 @@
 //! This module implements the internal storage format for
 //! the voxel data in each sector.
 
-use super::Side;
-use crate::block::Block;
+use crate::{
+    block::Block,
+    side::Side,
+};
 use core::slice;
 
 /// The number of voxels that comprise one edge of a sector.
@@ -103,6 +105,8 @@ impl SectorData {
             if y < SECTOR_DIM / 2 {
                 *blk = Block::Stone;
             } else if y == SECTOR_DIM / 2 {
+                *blk = Block::Soil;
+            } else if y == SECTOR_DIM - 2 {
                 *blk = Block::Grass;
             }
         }
