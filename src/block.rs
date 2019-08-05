@@ -10,6 +10,7 @@ type BlockTextureID = u32;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Block {
     Air,
+    TestBlock,
     Stone,
     Soil,
     Grass,
@@ -17,6 +18,11 @@ pub enum Block {
 
 impl Block {
     /// Returns the texture ID for the given side of this block.
+    ///
+    /// Texture IDs start at zero, in the upper left corner of
+    /// the texture atlas.
+    /// They increase from left to right across the atlas.
+    /// At the end of a row, they wrap onto the next "line".
     pub fn texture_id(self, side: Side) -> BlockTextureID {
         use Block::*;
         use Side::*;
@@ -24,6 +30,7 @@ impl Block {
         match (self, side) {
             // Air has no texture, and the renderer is broken if it's asking for one.
             (Air, _) => unreachable!(),
+            (TestBlock, _) => 16,
             (Stone, _) => 0,
             (Soil, _) => 1,
             (Grass, Top) => 2,

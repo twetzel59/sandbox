@@ -26,7 +26,11 @@ use std::ops::{Add, Mul, Neg};
 
 // Square edge length of an individual
 // texture on the texture atlas in pixels.
-const TILE_SIZE: f32 = 16.;
+const TILE_SIZE: u32 = 16;
+
+// Floating-point representation of the
+// ``TILE_SIZE`` constant.
+const TILE_SIZE_F32: f32 = TILE_SIZE as f32;
 
 // Stores all information needed to represent
 // a single face of a cube block.
@@ -272,17 +276,24 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     // V is reversed since textures have an inverted y-axis.
     let tile_u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
     let tile_v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
-
+    
+    // Query the size of the entire texture atlas.
+    let (width, height) = (tex_info.width, tex_info.height);
+    
+    // Determine the number of tiles there are in a single row
+    // of the texture atlas.
+    let tiles_per_row = width / TILE_SIZE;
+    
     // Determine the block's texture id, and convert it to a f32.
     // For some blocks, the texture depends on which side of the
     // block is in consideration, so the ``texture_id`` method
     // also takes the ``side`` field from our ``Face``.
-    let blk_id = blk.texture_id(blk_side) as f32;
+    let blk_id = blk.texture_id(blk_side);
     
-    // Query and cast the size of the entire texture atlas.
-    let (width, height) = (tex_info.width as f32, tex_info.height as f32);
+    let atlas_u = (blk_id % tiles_per_row) as f32;
+    let atlas_v = (blk_id / tiles_per_row) as f32;
     
     // Select the correct corner of the tile in question.
-    [(tile_u + blk_id) * TILE_SIZE / width,
-     tile_v * TILE_SIZE / height]
+    [(tile_u + atlas_u) * TILE_SIZE_F32 / width as f32,
+     (tile_v + atlas_v) * TILE_SIZE_F32 / height as f32]
 }
