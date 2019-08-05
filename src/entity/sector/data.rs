@@ -1,6 +1,7 @@
 //! This module implements the internal storage format for
 //! the voxel data in each sector.
 
+use super::Side;
 use crate::block::Block;
 use core::slice;
 
@@ -16,18 +17,6 @@ pub const SECTOR_MIN: usize = 0;
 /// The largest component allowed in a sector space coordinate.
 pub const SECTOR_MAX: usize = SECTOR_DIM - 1;
 
-/// Represents the possible relative directions
-/// of adjacent blocks.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Neighbor {
-    Front,
-    Back,
-    RightSide,
-    LeftSide,
-    Top,
-    Bottom,
-}
-
 /// Represents a position relative to the back lower left of a sector.
 ///
 /// Each triplet of integers maps to one voxel.
@@ -36,51 +25,51 @@ pub struct SectorCoords(pub usize, pub usize, pub usize);
 
 impl SectorCoords {
     /// Return the coordinates for the neighboring block
-    /// specified by ``direction``, if they exist.
+    /// specified by ``neighbor``, if they exist.
     ///
     /// If ``self`` is already on a sector boundary and the
     /// indicated direction points to a block outside the
     /// valid sector range, ``None`` is returned.
-    pub fn neighbor(self, neighbor: Neighbor) -> Option<SectorCoords> {
+    pub fn neighbor(self, neighbor: Side) -> Option<SectorCoords> {
         let SectorCoords(x, y, z) = self;
 
         match neighbor {
-            Neighbor::Front => {
+            Side::Front => {
                 if z < SECTOR_MAX {
                     Some(SectorCoords(x, y, z + 1))
                 } else {
                     None
                 }
             }
-            Neighbor::Back => {
+            Side::Back => {
                 if z > SECTOR_MIN {
                     Some(SectorCoords(x, y, z - 1))
                 } else {
                     None
                 }
             }
-            Neighbor::RightSide => {
+            Side::RightSide => {
                 if x < SECTOR_MAX {
                     Some(SectorCoords(x + 1, y, z))
                 } else {
                     None
                 }
             }
-            Neighbor::LeftSide => {
+            Side::LeftSide => {
                 if x > SECTOR_MIN {
                     Some(SectorCoords(x - 1, y, z))
                 } else {
                     None
                 }
             }
-            Neighbor::Top => {
+            Side::Top => {
                 if y < SECTOR_MAX {
                     Some(SectorCoords(x, y + 1, z))
                 } else {
                     None
                 }
             }
-            Neighbor::Bottom => {
+            Side::Bottom => {
                 if y > SECTOR_MIN {
                     Some(SectorCoords(x, y - 1, z))
                 } else {

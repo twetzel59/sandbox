@@ -7,7 +7,10 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::data::{Neighbor, SectorCoords, SectorData, SECTOR_DIM};
+use super::{
+    data::{SectorCoords, SectorData, SECTOR_DIM},
+    Side,
+};
 use crate::{
     block::Block,
     vertexattrib::{PosAttrib, UvAttrib, VoxelVertex},
@@ -29,8 +32,9 @@ const TILE_SIZE: f32 = 16.;
 
 // Stores all information needed to represent
 // a single face of a cube block.
+#[derive(Clone, Debug)]
 struct Face {
-    neighbor: Neighbor,    // What other block is adjacent to this face?
+    neighbor: Side,        // What other block is adjacent to this face?
     positions: [usize; 4], // Indices into the POSITIONS constant.
     flip_u: bool,          // Whether to flip the U coords.
     flip_v: bool,          // Whether to flip the V coords.
@@ -40,7 +44,7 @@ struct Face {
 
 impl Face {
     const fn new(
-        neighbor: Neighbor,
+        neighbor: Side,
         positions: [usize; 4],
         flip_u: bool,
         flip_v: bool,
@@ -60,12 +64,12 @@ impl Face {
 
 #[rustfmt::skip]
 const FACES: [Face; 6] = [
-    Face::new(Neighbor::Front,     [4, 5, 6, 7], false, false, 0, 1), // front
-    Face::new(Neighbor::Back,      [3, 2, 1, 0], true,  false, 0, 1), // back
-    Face::new(Neighbor::RightSide, [2, 6, 5, 1], true,  false, 2, 1), // right side
-    Face::new(Neighbor::LeftSide,  [7, 3, 0, 4], false, false, 2, 1), // left side
-    Face::new(Neighbor::Top,       [7, 6, 2, 3], false, true,  0, 2), // top
-    Face::new(Neighbor::Bottom,    [0, 1, 5, 4], false, false, 0, 2), // bottom
+    Face::new(Side::Front,     [4, 5, 6, 7], false, false, 0, 1), // front
+    Face::new(Side::Back,      [3, 2, 1, 0], true,  false, 0, 1), // back
+    Face::new(Side::RightSide, [2, 6, 5, 1], true,  false, 2, 1), // right side
+    Face::new(Side::LeftSide,  [7, 3, 0, 4], false, false, 2, 1), // left side
+    Face::new(Side::Top,       [7, 6, 2, 3], false, true,  0, 2), // top
+    Face::new(Side::Bottom,    [0, 1, 5, 4], false, false, 0, 2), // bottom
 ];
 
 const POSITIONS: [[f32; 3]; 8] = [
@@ -119,15 +123,7 @@ pub fn gen_terrain(
 
                 vertices.push(VoxelVertex {
                     pos: PosAttrib::new(translate3(POSITIONS[v], factors)),
-                    uv: UvAttrib::new(tex_coord(
-                        tex_info,
-                        blk,
-                        POSITIONS[v],
-                        f.flip_u,
-                        f.flip_v,
-                        f.u_idx,
-                        f.v_idx,
-                    )),
+                    uv: UvAttrib::new(tex_coord(tex_info, blk, POSITIONS[v], f)),
                 });
             }
 
@@ -166,11 +162,15 @@ where
     ]
 }
 
-// Returns the tex coord for a vertex at the given position.
+// Returns the tex coord for the given vertex on the given face.
 #[rustfmt::skip]
-fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], flip_u: bool, flip_v: bool,
-             u_idx: usize, v_idx: usize) -> [f32; 2]
-{
+fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) -> [f32; 2] {
+    let flip_u = face.flip_u;
+    let flip_v = face.flip_v;
+
+    let u_idx = face.u_idx;
+    let v_idx = face.v_idx;
+    
     let u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
     let v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
     // V is reversed since textures have an inverted y-axis.
@@ -183,3 +183,23 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], flip_u: bool, f
     [(u + blk_id - 1.) * TILE_SIZE / width,
      v * TILE_SIZE / height]
 }
+
+/*
+// Returns the tex coord for a vertex at the given position.
+#[rustfmt::skip]
+fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], flip_u: bool, flip_v: bool,
+             u_idx: usize, v_idx: usize) -> [f32; 2]
+{
+    let u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
+    let v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
+    // V is reversed since textures have an inverted y-axis.
+
+    let blk_id = *blk as u32;
+    let blk_id = blk_id as f32;
+
+    let (width, height) = (tex_info.width as f32, tex_info.height as f32);
+
+    [(u + blk_id - 1.) * TILE_SIZE / width,
+     v * TILE_SIZE / height]
+}
+*/
