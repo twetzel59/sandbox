@@ -191,6 +191,13 @@ pub fn gen_terrain(
         }
     }
 
+    if current_index == 0 {
+        // In this case, there were no visible blocks
+        // in the sector, so None is returned for the
+        // model.
+        return None;
+    }
+
     // Create the Interleaved vertex buffer objects
     // on the graphics card by using a ``luminance``
     // ``Tesselation`` to represent the geometry.
@@ -201,11 +208,9 @@ pub fn gen_terrain(
         .build()
         .unwrap();
 
-    // --> If we are here, at least one block in the sector
+    //If we are here, at least one block in the sector
     // had geometry (it wasn't all air), and the geometry
-    // will be returned here. <-- not yet implemented!!
-    //
-    // TODO: Return None otherwise.
+    // will be returned here.
     Some(tess)
 }
 

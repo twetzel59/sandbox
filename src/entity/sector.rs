@@ -58,6 +58,12 @@ impl SectorManager {
 
         self.sectors.insert(idx, sector);
     }
+    
+    /// For development purposes, add the given sector
+    /// to the manager. The geometry will not be affected.
+    pub fn test_add_sector(&mut self, idx: SectorIndex, sector: Sector) {
+        self.sectors.insert(idx, sector);
+    }
 }
 
 /// An ``Iterator` over the ``Sectors`` in a
@@ -141,12 +147,17 @@ impl Sector {
         self.geometry = meshgen::gen_terrain(ctx, texture_info, &self.data);
     }
 
-    pub fn test(world_pos: SectorIndex) -> Sector {
-        Self::with_data(world_pos, SectorData::test())
+    /// Return the ``Sector``'s geometry, if it has any.
+    ///
+    /// ``Sector``s may be fully generated without any
+    /// geometry, because some sectors consist of only
+    /// air blocks or blocks with no visual representation.
+    pub fn geometry(&self) -> &Option<Tess> {
+        &self.geometry
     }
 
-    pub fn test_force_geometry(&self) -> &Tess {
-        self.geometry.as_ref().unwrap()
+    pub fn test(world_pos: SectorIndex) -> Sector {
+        Self::with_data(world_pos, SectorData::test())
     }
 
     fn calc_mat(pos: SectorIndex) -> Mat4x4 {
