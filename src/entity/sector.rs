@@ -11,16 +11,85 @@
 mod data;
 mod meshgen;
 
-use crate::maths::matrix::{Mat4x4, Transform, Translation};
-use data::SectorData;
+use crate::maths::{
+    matrix::{Mat4x4, Transform, Translation},
+    vector::Vec3f,
+};
+use data::{SectorData, SECTOR_DIM};
 use luminance::{context::GraphicsContext, tess::Tess};
 use png::OutputInfo;
+use std::collections::hash_map::{self, HashMap};
+
+/// Represents the global position of a ``Sector``.
+/// Each integer increment represents one sector.
+/// Sectors are aligned their lower-left back corner.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct SectorIndex(pub i32, pub i32, pub i32);
+
+/// Stores all loaded ``Sector``s in the world.
+pub struct SectorManager {
+    sectors: HashMap<SectorIndex, Sector>,
+}
+
+impl SectorManager {
+    /// Create a new ``SectorManager`` with no stored
+    /// ``Sectors``.
+    pub fn new() -> SectorManager {
+        SectorManager {
+            sectors: HashMap::new(),
+        }
+    }
+
+    /// Iterate over the sectors in the sector manager.
+    pub fn iter(&self) -> SectorManagerIter<'_> {
+        self.iter()
+    }
+
+    /// For development purposes, create the sector with
+    /// the given index and force its geometry.
+    pub fn test_force_sector(
+        &mut self,
+        idx: SectorIndex,
+        tex_info: &OutputInfo,
+        ctx: &mut impl GraphicsContext,
+    ) {
+        let mut sector = Sector::test(idx);
+        sector.gen_geometry(tex_info, ctx);
+
+        self.sectors.insert(idx, sector);
+    }
+}
+
+/// An ``Iterator` over the ``Sectors`` in a
+/// ``SectorManager``.
+pub struct SectorManagerIter<'a> {
+    inner: hash_map::Iter<'a, SectorIndex, Sector>,
+}
+
+impl<'a> Iterator for SectorManagerIter<'a> {
+    type Item = (&'a SectorIndex, &'a Sector);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a> IntoIterator for &'a SectorManager {
+    type IntoIter = SectorManagerIter<'a>;
+    type Item = (&'a SectorIndex, &'a Sector);
+
+    fn into_iter(self) -> Self::IntoIter {
+        SectorManagerIter {
+            inner: self.sectors.iter(),
+        }
+    }
+}
 
 /// A single sector or "chunk" of the world.
 ///
 /// A ``Sector`` contains an internal array
 /// of the blocks within its bounds.
-/// 
+///
 /// It also keeps track of its position in
 /// world coordinates.
 ///
@@ -41,7 +110,7 @@ impl Sector {
     ///
     /// Construction does not trigger the creation of the
     /// ``Sector``'s geometry.
-    pub fn new(world_pos: (i32, i32, i32)) -> Sector {
+    pub fn new(world_pos: SectorIndex) -> Sector {
         Self::with_data(world_pos, SectorData::new())
     }
 
@@ -49,7 +118,7 @@ impl Sector {
     ///
     /// Construction will not result in the creation
     /// of geometry.
-    pub fn with_data(world_pos: (i32, i32, i32), sector_data: SectorData) -> Sector {
+    pub fn with_data(world_pos: SectorIndex, sector_data: SectorData) -> Sector {
         Sector {
             translation: Self::calc_mat(world_pos),
             data: sector_data,
@@ -71,16 +140,19 @@ impl Sector {
     pub fn gen_geometry(&mut self, texture_info: &OutputInfo, ctx: &mut impl GraphicsContext) {
         self.geometry = meshgen::gen_terrain(ctx, texture_info, &self.data);
     }
-    
-    pub fn test(world_pos: (i32, i32, i32)) -> Sector {
+
+    pub fn test(world_pos: SectorIndex) -> Sector {
         Self::with_data(world_pos, SectorData::test())
     }
-    
+
     pub fn test_force_geometry(&self) -> &Tess {
         self.geometry.as_ref().unwrap()
     }
-    
-    fn calc_mat(pos: (i32, i32, i32)) -> Mat4x4 {
-        Translation::new((pos.0 as f32, pos.1 as f32, pos.2 as f32)).to_matrix()
+
+    fn calc_mat(pos: SectorIndex) -> Mat4x4 {
+        let SectorIndex(sx, sy, sz) = pos;
+        let pos = Vec3f::new(sx as f32, sy as f32, sz as f32) * SECTOR_DIM as f32;
+
+        Translation::new(pos).to_matrix()
     }
 }

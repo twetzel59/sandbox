@@ -14,7 +14,10 @@ use luminance::{
 use luminance_derive::UniformInterface;
 use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt};
 use sandbox::{
-    entity::{camera::Camera, sector::Sector},
+    entity::{
+        camera::Camera,
+        sector::{Sector, SectorIndex, SectorManager},
+    },
     maths::{
         matrix::{Projection, Transform, IDENTITY},
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
@@ -130,9 +133,12 @@ fn main() {
     let mut cam = Camera::at_origin();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
-    // Create a test sector and generate its mesh
-    let mut test_sector = Sector::test((0, 0, 0));
-    test_sector.gen_geometry(terrain_tex.info(), &mut surface);
+    // Create a ``SectorManager`` and add four testing sectors.
+    let mut sector_mgr = SectorManager::new();
+    sector_mgr.test_force_sector(SectorIndex(0, 0, 0), terrain_tex.info(), &mut surface);
+    sector_mgr.test_force_sector(SectorIndex(1, 0, 0), terrain_tex.info(), &mut surface);
+    sector_mgr.test_force_sector(SectorIndex(0, 0, -1), terrain_tex.info(), &mut surface);
+    sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
 
     // Framebuffer
     let mut back_buffer = Framebuffer::back_buffer(surface.size());
@@ -143,7 +149,7 @@ fn main() {
     'game: loop {
         // Handle timing
         let dt = clock.restart_seconds();
-        
+
         //std::thread::sleep(Duration::from_millis(200));
 
         // Poll events
@@ -173,7 +179,7 @@ fn main() {
             proj_mat = make_proj(&surface).to_matrix();
         }
 
-        let move_speed = 2.0 * dt as f32;
+        let move_speed = 4.0 * dt as f32;
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
@@ -241,22 +247,24 @@ fn main() {
 
                     //iface.time.update(elapsed as f32);
 
-                    iface.model_mat.update(test_sector.translation().0);
-                    iface.view_mat.update(cam.to_matrix().0);
-                    iface.terrain_texture.update(&bound_terrain_tex);
-
                     if resized {
                         println!("load proj matrix!");
                         //iface.projection_mat.update(IDENTITY.0);
                         iface.projection_mat.update(proj_mat.0);
                     }
 
-                    let state = RenderState::default().set_face_culling(FaceCulling::default());
+                    iface.view_mat.update(cam.to_matrix().0);
+                    iface.terrain_texture.update(&bound_terrain_tex);
 
-                    rdr_gate.render(state, |tess_gate| {
-                        //tess_gate.render(&mut surface, (&indexed_triangles).into());
-                        tess_gate.render(&mut surface, test_sector.test_force_geometry().into());
-                    });
+                    for (_, sector) in &sector_mgr {
+                        iface.model_mat.update(sector.translation().0);
+
+                        let state = RenderState::default().set_face_culling(FaceCulling::default());
+
+                        rdr_gate.render(state, |tess_gate| {
+                            tess_gate.render(&mut surface, sector.test_force_geometry().into());
+                        });
+                    }
                 });
             });
 

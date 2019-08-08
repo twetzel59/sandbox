@@ -1,10 +1,7 @@
 //! This module implements the internal storage format for
 //! the voxel data in each sector.
 
-use crate::{
-    block::Block,
-    side::Side,
-};
+use crate::{block::Block, side::Side};
 use core::slice;
 
 /// The number of voxels that comprise one edge of a sector.
