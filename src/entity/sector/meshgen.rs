@@ -7,7 +7,7 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::data::{SectorCoords, SectorData, SECTOR_DIM};
+use super::data::{SectorCoords, SectorData};
 use crate::{
     block::Block,
     side::Side,
@@ -18,7 +18,7 @@ use luminance::{
     tess::{Mode, Tess, TessBuilder},
 };
 use png::OutputInfo;
-use std::ops::{Add, Mul, Neg};
+use std::ops::Add;
 
 // Visual length of the cube sides in
 // OpenGL model units.

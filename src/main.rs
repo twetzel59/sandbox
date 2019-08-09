@@ -8,7 +8,6 @@ use luminance::{
     pixel::Floating,
     render_state::RenderState,
     shader::program::{Program, Uniform},
-    tess::{Mode, TessBuilder},
     texture::{Dim2, Flat},
 };
 use luminance_derive::UniformInterface;
@@ -20,51 +19,19 @@ use sandbox::{
         sector::{Sector, SectorIndex, SectorManager},
     },
     maths::{
-        matrix::{Projection, Transform, IDENTITY},
+        matrix::{Projection, Transform},
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
     },
     resource::ResourceManager,
     timing::Clock,
-    vertexattrib::{PosAttrib, Semantic, UvAttrib, VoxelVertex},
+    vertexattrib::Semantic,
 };
-use std::{
-    f32::consts::PI,
-    time::{Duration, Instant},
-};
+use std::f32::consts::PI;
 
 const VS: &'static str = include_str!("vs.glsl");
 const FS: &'static str = include_str!("fs.glsl");
 
-/*
-const VERTICES: [VoxelVertex; 4] = [
-    VoxelVertex {
-        pos: PosAttrib::new([0.0, 0.0, 0.0]),
-        uv: UvAttrib::new([1., 0.]),
-    },
-    VoxelVertex {
-        pos: PosAttrib::new([1.0, 0.0, 0.0]),
-        uv: UvAttrib::new([0., 0.]),
-    },
-    VoxelVertex {
-        pos: PosAttrib::new([0.5, 0.0, 0.87]),
-        uv: UvAttrib::new([0., 1.]),
-    },
-    VoxelVertex {
-        pos: PosAttrib::new([0.5, 0.5, 0.435]),
-        uv: UvAttrib::new([1., 1.]),
-    },
-];
-
-const INDICES: [u32; 12] = [
-    2, 1, 0, // bottom
-    3, 1, 0, // side
-    3, 1, 2, // side
-    3, 2, 0, //side
-];
-*/
-
 const BLACK: [f32; 4] = [0., 0., 0., 0.];
-//const WHITE: [f32; 4] = [1., 1., 1., 0.];
 
 #[derive(UniformInterface)]
 struct ShaderInterface {
@@ -123,13 +90,6 @@ fn main() {
     let (program, _) = Program::<Semantic, (), ShaderInterface>::from_strings(None, VS, None, FS)
         .expect("program creation");
 
-    //let indexed_triangles = TessBuilder::new(&mut surface)
-    //    .add_vertices(VERTICES)
-    //    .set_indices(INDICES)
-    //    .set_mode(Mode::Triangle)
-    //    .build()
-    //    .unwrap();
-
     // Create a ``Player`
     let mut player = Player::at_origin();
 
@@ -143,7 +103,7 @@ fn main() {
     sector_mgr.test_force_sector(SectorIndex(1, 0, 0), terrain_tex.info(), &mut surface);
     sector_mgr.test_force_sector(SectorIndex(0, 0, -1), terrain_tex.info(), &mut surface);
     sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
-    
+
     // Also test an empty sector.
     let empty_idx = SectorIndex(0, 1, 0);
     let mut empty = Sector::new(empty_idx);
@@ -254,15 +214,8 @@ fn main() {
                 let bound_terrain_tex = pipe.bind_texture(terrain_tex.inner());
 
                 shd_gate.shade(&program, |rdr_gate, iface| {
-                    //let elapsed = Instant::now() - start_time;
-                    //let elapsed =
-                    //    elapsed.as_secs() as f64 + (elapsed.subsec_millis() as f64 * 1e-3);
-
-                    //iface.time.update(elapsed as f32);
-
                     if resized {
                         println!("load proj matrix!");
-                        //iface.projection_mat.update(IDENTITY.0);
                         iface.projection_mat.update(proj_mat.0);
                     }
 

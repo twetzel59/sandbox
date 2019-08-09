@@ -37,7 +37,7 @@ impl ResourceManager {
             textures: TextureManager::load_all(ctx),
         }
     }
-    
+
     /// Return a reference to the ``TextureManager`` for this
     /// parent resource manager.
     pub fn texture_mgr(&self) -> &TextureManager {
@@ -84,7 +84,7 @@ impl TextureManager {
             terrain_tex: Rc::new(Texture2D::with_path(ctx, terrain_path, &sampler)),
         }
     }
-    
+
     pub fn terrain(&self) -> Rc<Texture2D> {
         Rc::clone(&self.terrain_tex)
     }
@@ -140,12 +140,12 @@ impl Texture2D {
         let file = File::open(path).unwrap();
         Self::from_file(ctx, file, sampler)
     }
-    
+
     /// Return the low-level inner ``luminance`` texture.
     pub fn inner(&self) -> &Tex2DInner {
         &self.inner
     }
-    
+
     /// Return the texture info structure.
     pub fn info(&self) -> &OutputInfo {
         &self.info

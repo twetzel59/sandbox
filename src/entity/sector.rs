@@ -58,7 +58,7 @@ impl SectorManager {
 
         self.sectors.insert(idx, sector);
     }
-    
+
     /// For development purposes, add the given sector
     /// to the manager. The geometry will not be affected.
     pub fn test_add_sector(&mut self, idx: SectorIndex, sector: Sector) {

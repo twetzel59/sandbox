@@ -1,11 +1,7 @@
 //! This module provides the camera, which is used to represent a
 //! particular perspective in the game world.
 
-use crate::maths::{
-    matrix::{Mat4x4, Rotation, Transform, Translation},
-    vector::{Vec2f, Vec3f},
-};
-use std::f32::consts::{FRAC_PI_2, PI};
+use crate::maths::matrix::{Mat4x4, Rotation, Transform, Translation};
 
 /// Stores the position and rotation of a virtual camera.
 ///
@@ -28,7 +24,7 @@ impl Camera {
     pub fn new() -> Camera {
         Default::default()
     }
-    
+
     /// Move and rotate the camera to look from an
     /// entity's point of view in first person.
     pub fn snap_to(&mut self, target: &impl CameraTarget) {

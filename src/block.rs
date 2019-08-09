@@ -26,7 +26,7 @@ impl Block {
     pub fn texture_id(self, side: Side) -> BlockTextureID {
         use Block::*;
         use Side::*;
-        
+
         match (self, side) {
             // Air has no texture, and the renderer is broken if it's asking for one.
             (Air, _) => unreachable!(),
@@ -38,11 +38,11 @@ impl Block {
             (Grass, _) => 3,
         }
     }
-    
+
     /// Returns ``true`` if the block is transparent.
     pub fn is_transparent(self) -> bool {
         use Block::*;
-        
+
         match self {
             Air => true,
             _ => false,
