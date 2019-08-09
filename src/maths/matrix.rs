@@ -139,6 +139,12 @@ impl Translation {
     }
 }
 
+impl Default for Translation {
+    fn default() -> Self {
+        Self::new((0., 0., 0.))
+    }
+}
+
 impl Neg for Translation {
     type Output = Self;
 
@@ -208,6 +214,12 @@ impl Transform for Rotation {
         ];
 
         &rx * &ry
+    }
+}
+
+impl Default for Rotation {
+    fn default() -> Self {
+        Self::new((0., 0.))
     }
 }
 

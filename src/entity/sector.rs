@@ -42,7 +42,7 @@ impl SectorManager {
 
     /// Iterate over the sectors in the sector manager.
     pub fn iter(&self) -> SectorManagerIter<'_> {
-        self.iter()
+        self.into_iter()
     }
 
     /// For development purposes, create the sector with

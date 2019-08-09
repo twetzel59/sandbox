@@ -16,6 +16,7 @@ use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt}
 use sandbox::{
     entity::{
         camera::Camera,
+        player::Player,
         sector::{Sector, SectorIndex, SectorManager},
     },
     maths::{
@@ -129,8 +130,11 @@ fn main() {
     //    .build()
     //    .unwrap();
 
-    // Camera and view
-    let mut cam = Camera::at_origin();
+    // Create a ``Player`
+    let mut player = Player::at_origin();
+
+    // Camera and projection matrix
+    let mut cam = Camera::new();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
     // Create a ``SectorManager`` and add four testing sectors.
@@ -189,23 +193,23 @@ fn main() {
 
         // Movement
         if surface.lib_handle().get_key(Key::D) == Action::Press {
-            cam.move_x(move_speed);
+            player.move_x(move_speed);
         } else if surface.lib_handle().get_key(Key::A) == Action::Press {
-            cam.move_x(-move_speed);
+            player.move_x(-move_speed);
         }
 
         if surface.lib_handle().get_key(Key::Space) == Action::Press {
-            cam.slide((0., move_speed, 0.));
+            player.slide((0., move_speed, 0.));
         } else if surface.lib_handle().get_key(Key::LeftShift) == Action::Press {
-            cam.slide((0., -move_speed, 0.));
+            player.slide((0., -move_speed, 0.));
         }
 
         if surface.lib_handle().get_key(Key::S) == Action::Press {
-            //cam.slide((0., 0., move_speed));
-            cam.move_z(move_speed);
+            //player.slide((0., 0., move_speed));
+            player.move_z(move_speed);
         } else if surface.lib_handle().get_key(Key::W) == Action::Press {
-            //cam.slide((0., 0., -move_speed));
-            cam.move_z(-move_speed);
+            //player.slide((0., 0., -move_speed));
+            player.move_z(-move_speed);
         }
 
         let rot_speed = 0.012;
@@ -213,15 +217,15 @@ fn main() {
         // Pan / pitch with arrow keys
 
         if surface.lib_handle().get_key(Key::Left) == Action::Press {
-            cam.spin((0., rot_speed));
+            player.spin((0., rot_speed));
         } else if surface.lib_handle().get_key(Key::Right) == Action::Press {
-            cam.spin((0., -rot_speed));
+            player.spin((0., -rot_speed));
         }
 
         if surface.lib_handle().get_key(Key::Up) == Action::Press {
-            cam.spin((rot_speed, 0.));
+            player.spin((rot_speed, 0.));
         } else if surface.lib_handle().get_key(Key::Down) == Action::Press {
-            cam.spin((-rot_speed, 0.));
+            player.spin((-rot_speed, 0.));
         }
 
         // Pan / pitch with mouse
@@ -238,7 +242,10 @@ fn main() {
             (-mouse_delta.1 * mouse_speed) as f32,
             (-mouse_delta.0 * mouse_speed) as f32,
         );
-        cam.spin(cam_delta);
+        player.spin(cam_delta);
+
+        // Update camera
+        cam.snap_to(&player);
 
         // Render frame
         surface

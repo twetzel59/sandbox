@@ -2,4 +2,5 @@
 //! such as the camera.
 
 pub mod camera;
+pub mod player;
 pub mod sector;
