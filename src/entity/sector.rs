@@ -56,12 +56,21 @@ impl SectorManager {
         let mut sector = Sector::test(idx);
         sector.gen_geometry(tex_info, ctx);
 
-        self.sectors.insert(idx, sector);
+        self.test_add_sector(idx, sector);
     }
 
     /// For development purposes, add the given sector
     /// to the manager. The geometry will not be affected.
     pub fn test_add_sector(&mut self, idx: SectorIndex, sector: Sector) {
+        println!(
+            "{}",
+            match sector.geometry {
+                SectorGeometry::PendingMeshGen => "PendingMeshGen",
+                SectorGeometry::Generated(_) => "Generated(_: Tess)",
+                SectorGeometry::GeneratedEmpty => "GeneratedEmpty",
+            }
+        );
+
         self.sectors.insert(idx, sector);
     }
 }
@@ -108,7 +117,7 @@ impl<'a> IntoIterator for &'a SectorManager {
 pub struct Sector {
     translation: Mat4x4,
     data: SectorData,
-    geometry: Option<Tess>,
+    geometry: SectorGeometry,
 }
 
 impl Sector {
@@ -128,7 +137,7 @@ impl Sector {
         Sector {
             translation: Self::calc_mat(world_pos),
             data: sector_data,
-            geometry: None,
+            geometry: SectorGeometry::PendingMeshGen,
         }
     }
 
@@ -144,7 +153,10 @@ impl Sector {
     /// the ``luminance`` backend's state, the graphics
     /// context is needed. It is usually the GLFW window.
     pub fn gen_geometry(&mut self, texture_info: &OutputInfo, ctx: &mut impl GraphicsContext) {
-        self.geometry = meshgen::gen_terrain(ctx, texture_info, &self.data);
+        self.geometry = match meshgen::gen_terrain(ctx, texture_info, &self.data) {
+            Some(geo) => SectorGeometry::Generated(geo),
+            None => SectorGeometry::GeneratedEmpty,
+        };
     }
 
     /// Return the ``Sector``'s geometry, if it has any.
@@ -152,8 +164,12 @@ impl Sector {
     /// ``Sector``s may be fully generated without any
     /// geometry, because some sectors consist of only
     /// air blocks or blocks with no visual representation.
-    pub fn geometry(&self) -> &Option<Tess> {
-        &self.geometry
+    pub fn geometry(&self) -> Option<&Tess> {
+        if let SectorGeometry::Generated(ref tess) = self.geometry {
+            Some(tess)
+        } else {
+            None
+        }
     }
 
     pub fn test(world_pos: SectorIndex) -> Sector {
@@ -166,4 +182,27 @@ impl Sector {
 
         Translation::new(pos).to_matrix()
     }
+}
+
+/// Represents the tesselation associated with
+/// a ``Sector``, if one is needed.
+///
+/// There are three potential states of a sector's
+/// geometry: the geometry has not yet been generated,
+/// the sector has been processed and has no geometry
+/// (i.e. it is empty), or the sector has a tesselation.
+enum SectorGeometry {
+    /// The ``Sector``'s data has not been processed by
+    /// the mesh generator yet.
+    PendingMeshGen,
+
+    /// The ``Sector`` has been processed by the mesh
+    /// generator, but there is no geometry for the
+    /// ``Sector`` because it contains entirely invisible
+    /// blocks (like ``Air``).
+    GeneratedEmpty,
+
+    /// The ``Sector`` has a ``Tess`` created by the mesh
+    /// generator and can be rendered.
+    Generated(Tess),
 }
