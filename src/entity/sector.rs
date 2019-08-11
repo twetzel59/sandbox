@@ -153,7 +153,7 @@ impl Sector {
     /// the ``luminance`` backend's state, the graphics
     /// context is needed. It is usually the GLFW window.
     pub fn gen_geometry(&mut self, texture_info: &OutputInfo, ctx: &mut impl GraphicsContext) {
-        self.geometry = match meshgen::gen_terrain(ctx, texture_info, &self.data) {
+        self.geometry = match meshgen::gen_terrain(ctx, texture_info, self) {
             Some(geo) => SectorGeometry::Generated(geo),
             None => SectorGeometry::GeneratedEmpty,
         };
@@ -174,6 +174,11 @@ impl Sector {
 
     pub fn test(world_pos: SectorIndex) -> Sector {
         Self::with_data(world_pos, SectorData::test())
+    }
+
+    /// Returns the ``SectorData`` for this instance.
+    fn data(&self) -> &SectorData {
+        &self.data
     }
 
     fn calc_mat(pos: SectorIndex) -> Mat4x4 {

@@ -7,7 +7,7 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::data::{SectorCoords, SectorData};
+use super::{data::SectorCoords, Sector};
 use crate::{
     block::Block,
     side::Side,
@@ -101,7 +101,7 @@ const POSITIONS: [[f32; 3]; 8] = [
 pub fn gen_terrain(
     ctx: &mut impl GraphicsContext,
     tex_info: &OutputInfo,
-    voxels: &SectorData,
+    sct: &Sector,
 ) -> Option<Tess> {
     // Initialize empty vectors to hold the vertex
     // attribute data that will be generated.
@@ -111,6 +111,10 @@ pub fn gen_terrain(
     let mut indices: Vec<u32> = Vec::new();
     let mut current_index = 0;
 
+    // Alias the ``SectorData`` for this instance
+    // for easy access.
+    let voxels = sct.data();
+    
     // For every ``Block``, or voxel, in the sector, we
     // will need to draw between zero and six faces.
     for (coords, blk) in voxels {
