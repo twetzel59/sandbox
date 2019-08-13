@@ -15,7 +15,7 @@ use crate::maths::{
     matrix::{Mat4x4, Transform, Translation},
     vector::Vec3f,
 };
-use data::{NeighborData, SectorData, SECTOR_DIM};
+use data::{SectorData, SECTOR_DIM};
 use luminance::{context::GraphicsContext, tess::Tess};
 use png::OutputInfo;
 use std::collections::hash_map::{self, HashMap};
@@ -66,7 +66,6 @@ enum SectorGeometry {
 pub struct Sector {
     translation: Mat4x4,
     data: SectorData,
-    neighbor_data: NeighborData,
     geometry: SectorGeometry,
 }
 

@@ -5,8 +5,6 @@ use crate::{block::Block, side::Side};
 use core::slice;
 
 /// The number of voxels that comprise one edge of a sector.
-/// This number *MUST* be divisible by eight for neighbors to
-/// work properly.
 pub const SECTOR_DIM: usize = 16;
 
 /// The total number of voxels in one cubic sector.
@@ -231,32 +229,6 @@ impl<'a> IntoIterator for &'a mut SectorData {
         SectorIterMut {
             inner: self.blocks.iter_mut(),
             current: 0,
-        }
-    }
-}
-
-/// The number of bytes in a neighbor field.
-pub const NEIGHBOR_FIELD_LEN: usize = SECTOR_DIM * SECTOR_DIM * 6 / 8;
-
-/// The type of a sequence of boolean neighbor
-/// attributes.
-pub type NeighborField = [u8; NEIGHBOR_FIELD_LEN];
-
-/// Holds specific metadata about the blocks in
-/// neighboring sectors along the shared faces
-/// of the sector and its neighbors.
-pub struct NeighborData {
-    opaque_blocks: NeighborField,
-}
-
-impl NeighborData {
-    /// For development purposes, create a new ``NeighborData``
-    /// containing all ``false`` entries.
-    pub fn test() -> NeighborData {
-        debug_assert!(SECTOR_DIM % 8 == 0, "SECTOR_DIM must be divisible by 8 for neighbors");
-        
-        NeighborData {
-            opaque_blocks: [0; NEIGHBOR_FIELD_LEN],
         }
     }
 }
