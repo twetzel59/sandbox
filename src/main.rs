@@ -105,7 +105,7 @@ fn main() {
     sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
 
     // Also test an empty sector.
-    let empty_idx = SectorIndex(0, 1, 0);
+    let empty_idx = SectorIndex(0, 0, -2);
     let mut empty = Sector::new(empty_idx);
     empty.gen_geometry(terrain_tex.info(), &mut surface);
     sector_mgr.test_add_sector(empty_idx, empty);

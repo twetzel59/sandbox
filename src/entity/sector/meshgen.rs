@@ -7,7 +7,10 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::{data::SectorCoords, Sector};
+use super::{
+    data::{SectorCoords, SECTOR_MAX, SECTOR_MIN},
+    Sector,
+};
 use crate::{
     block::Block,
     side::Side,
@@ -114,19 +117,36 @@ pub fn gen_terrain(
     // Alias the ``SectorData`` for this instance
     // for easy access.
     let voxels = sct.data();
-    
+
     // For every ``Block``, or voxel, in the sector, we
     // will need to draw between zero and six faces.
     for (coords, blk) in voxels {
+        // Pull the x, y, z components out of the iterator's
+        // Item for the sake of readability.
+        let SectorCoords(x, y, z) = coords;
+
+        // If a block lies in the padding range of a sector
+        // it should only be rendered by the neighboring sector.
+        // Skip it.
+        if x == SECTOR_MIN
+            || x == SECTOR_MAX
+            || y == SECTOR_MIN
+            || y == SECTOR_MAX
+            || z == SECTOR_MIN
+            || z == SECTOR_MAX
+        {
+            continue;
+        }
+
         // If a block is air, it doesn't have any geometry,
         // and is skipped.
         if *blk == Block::Air {
             continue;
         }
 
-        // Pull the x, y, z components out of the iterator's
-        // Item for the sake of readability.
-        let SectorCoords(x, y, z) = coords;
+        // The coordinates of the block will be needed as
+        // floating-point quantities as well.
+        // Cast them here.
         let factors = (x as f32, y as f32, z as f32);
 
         // Now, each cube has six faces.

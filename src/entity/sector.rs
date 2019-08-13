@@ -15,7 +15,7 @@ use crate::maths::{
     matrix::{Mat4x4, Transform, Translation},
     vector::Vec3f,
 };
-use data::{SectorData, SECTOR_DIM};
+use data::{SectorData, SECTOR_DIM_EXCL};
 use luminance::{context::GraphicsContext, tess::Tess};
 use png::OutputInfo;
 use std::collections::hash_map::{self, HashMap};
@@ -86,7 +86,6 @@ impl Sector {
         Sector {
             translation: Self::calc_mat(world_pos),
             data: sector_data,
-            neighbor_data: NeighborData::test(),
             geometry: SectorGeometry::PendingMeshGen,
         }
     }
@@ -133,7 +132,7 @@ impl Sector {
 
     fn calc_mat(pos: SectorIndex) -> Mat4x4 {
         let SectorIndex(sx, sy, sz) = pos;
-        let pos = Vec3f::new(sx as f32, sy as f32, sz as f32) * SECTOR_DIM as f32;
+        let pos = Vec3f::new(sx as f32, sy as f32, sz as f32) * SECTOR_DIM_EXCL as f32;
 
         Translation::new(pos).to_matrix()
     }

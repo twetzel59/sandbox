@@ -4,8 +4,17 @@
 use crate::{block::Block, side::Side};
 use core::slice;
 
-/// The number of voxels that comprise one edge of a sector.
-pub const SECTOR_DIM: usize = 16;
+/// The number of voxels that comprise one edge of a sector,
+/// excluding padding.
+pub const SECTOR_DIM_EXCL: usize = 16;
+
+/// The number of voxels that are shared with the neighboring
+/// sector within one sector.
+pub const SECTOR_PAD: usize = 1;
+
+/// The number of voxels along one edge of a sector, including
+/// padding.
+pub const SECTOR_DIM: usize = SECTOR_PAD + SECTOR_DIM_EXCL + SECTOR_PAD;
 
 /// The total number of voxels in one cubic sector.
 pub const SECTOR_LEN: usize = SECTOR_DIM * SECTOR_DIM * SECTOR_DIM;
