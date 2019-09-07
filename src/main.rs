@@ -97,18 +97,20 @@ fn main() {
     let mut cam = Camera::new();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
-    // Create a ``SectorManager`` and add four testing sectors.
+    // Create a ``SectorManager`` ~~and add four testing sectors~~.
     let mut sector_mgr = SectorManager::new();
-    sector_mgr.test_force_sector(SectorIndex(0, 0, 0), terrain_tex.info(), &mut surface);
-    sector_mgr.test_force_sector(SectorIndex(1, 0, 0), terrain_tex.info(), &mut surface);
-    sector_mgr.test_force_sector(SectorIndex(0, 0, -1), terrain_tex.info(), &mut surface);
-    sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
+    //sector_mgr.test_force_sector(SectorIndex(0, 0, 0), terrain_tex.info(), &mut surface);
+    //sector_mgr.test_force_sector(SectorIndex(1, 0, 0), terrain_tex.info(), &mut surface);
+    //sector_mgr.test_force_sector(SectorIndex(0, 0, -1), terrain_tex.info(), &mut surface);
+    //sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
 
+    /*
     // Also test an empty sector.
     let empty_idx = SectorIndex(0, 0, -2);
     let mut empty = Sector::new(empty_idx);
     empty.gen_geometry(terrain_tex.info(), &mut surface);
     sector_mgr.test_add_sector(empty_idx, empty);
+    */
 
     // Framebuffer
     let mut back_buffer = Framebuffer::back_buffer(surface.size());

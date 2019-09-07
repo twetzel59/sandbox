@@ -101,29 +101,6 @@ impl SectorData {
         }
     }
 
-    /// Generate a ``SectorData`` filled halfway with stone.
-    pub fn test() -> SectorData {
-        let mut data = SectorData::new();
-
-        for (coords, blk) in data.iter_mut() {
-            let SectorCoords(x, y, z) = coords;
-
-            if y < SECTOR_DIM / 2 && y <= z {
-                *blk = Block::Stone;
-            } else if y == SECTOR_DIM / 2 && y <= z {
-                *blk = Block::Soil;
-            } else if y == SECTOR_DIM - 2 {
-                if x == 0 && z == 0 {
-                    *blk = Block::TestBlock;
-                } else if x % 2 == 0 && z % 2 == 0 {
-                    *blk = Block::Grass;
-                }
-            }
-        }
-
-        data
-    }
-
     /// Return a reference to the block located at the given position.
     pub fn block(&self, sector_coords: SectorCoords) -> &Block {
         let idx = Self::index(sector_coords);

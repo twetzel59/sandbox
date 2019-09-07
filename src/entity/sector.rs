@@ -9,6 +9,7 @@
 //! OpenGL.
 
 mod data;
+mod generation;
 mod meshgen;
 
 use crate::maths::{
@@ -16,6 +17,7 @@ use crate::maths::{
     vector::Vec3f,
 };
 use data::{SectorData, SECTOR_DIM_EXCL};
+use generation::GenController;
 use luminance::{context::GraphicsContext, tess::Tess};
 use png::OutputInfo;
 use std::collections::hash_map::{self, HashMap};
@@ -91,10 +93,6 @@ impl Sector {
         self.geometry.as_ref()
     }
 
-    pub fn test(world_pos: SectorIndex) -> Sector {
-        Self::with_data(world_pos, SectorData::test())
-    }
-
     /// Returns the ``SectorData`` for this instance.
     fn data(&self) -> &SectorData {
         &self.data
@@ -111,6 +109,7 @@ impl Sector {
 /// Stores all loaded ``Sector``s in the world.
 pub struct SectorManager {
     sectors: HashMap<SectorIndex, Sector>,
+    generator: GenController,
 }
 
 impl SectorManager {
@@ -119,40 +118,13 @@ impl SectorManager {
     pub fn new() -> SectorManager {
         SectorManager {
             sectors: HashMap::new(),
+            generator: GenController::launch(),
         }
     }
 
     /// Iterate over the sectors in the sector manager.
     pub fn iter(&self) -> SectorManagerIter<'_> {
         self.into_iter()
-    }
-
-    /// For development purposes, create the sector with
-    /// the given index and force its geometry.
-    pub fn test_force_sector(
-        &mut self,
-        idx: SectorIndex,
-        tex_info: &OutputInfo,
-        ctx: &mut impl GraphicsContext,
-    ) {
-        let mut sector = Sector::test(idx);
-        sector.gen_geometry(tex_info, ctx);
-
-        self.test_add_sector(idx, sector);
-    }
-
-    /// For development purposes, add the given sector
-    /// to the manager. The geometry will not be affected.
-    pub fn test_add_sector(&mut self, idx: SectorIndex, sector: Sector) {
-        println!(
-            "{}",
-            match sector.geometry {
-                Some(_) => "geometry",
-                None => "no geometry",
-            }
-        );
-
-        self.sectors.insert(idx, sector);
     }
 }
 
