@@ -108,14 +108,14 @@ impl SectorData {
         for (coords, blk) in data.iter_mut() {
             let SectorCoords(x, y, z) = coords;
 
-            if y < SECTOR_DIM / 2 {
+            if y < SECTOR_DIM / 2 && y <= z {
                 *blk = Block::Stone;
-            } else if y == SECTOR_DIM / 2 {
+            } else if y == SECTOR_DIM / 2 && y <= z {
                 *blk = Block::Soil;
             } else if y == SECTOR_DIM - 2 {
                 if x == 0 && z == 0 {
                     *blk = Block::TestBlock;
-                } else {
+                } else if x % 2 == 0 && z % 2 == 0 {
                     *blk = Block::Grass;
                 }
             }

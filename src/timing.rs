@@ -71,7 +71,7 @@ impl Clock {
 ///
 /// This function is limited in precision by
 /// the floating point representation, and is
-/// be less precise than the ``Duration``
+/// less precise than the ``Duration``
 /// struct, which represents lengths of time as
 /// whole units.
 pub fn dur_sec(dur: Duration) -> f64 {
