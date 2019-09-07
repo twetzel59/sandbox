@@ -13,11 +13,7 @@ use luminance::{
 use luminance_derive::UniformInterface;
 use luminance_glfw_custom::surface::{GlfwSurface, Surface, WindowDim, WindowOpt};
 use sandbox::{
-    entity::{
-        camera::Camera,
-        player::Player,
-        sector::{Sector, SectorIndex, SectorManager},
-    },
+    entity::{camera::Camera, player::Player, sector::SectorManager},
     maths::{
         matrix::{Projection, Transform},
         vector::{MathVec, Vec2f, Vec3, Vec4, Vec4f},
@@ -97,20 +93,8 @@ fn main() {
     let mut cam = Camera::new();
     let mut proj_mat = make_proj(&surface).to_matrix();
 
-    // Create a ``SectorManager`` ~~and add four testing sectors~~.
-    let mut sector_mgr = SectorManager::new();
-    //sector_mgr.test_force_sector(SectorIndex(0, 0, 0), terrain_tex.info(), &mut surface);
-    //sector_mgr.test_force_sector(SectorIndex(1, 0, 0), terrain_tex.info(), &mut surface);
-    //sector_mgr.test_force_sector(SectorIndex(0, 0, -1), terrain_tex.info(), &mut surface);
-    //sector_mgr.test_force_sector(SectorIndex(1, 0, -1), terrain_tex.info(), &mut surface);
-
-    /*
-    // Also test an empty sector.
-    let empty_idx = SectorIndex(0, 0, -2);
-    let mut empty = Sector::new(empty_idx);
-    empty.gen_geometry(terrain_tex.info(), &mut surface);
-    sector_mgr.test_add_sector(empty_idx, empty);
-    */
+    // Create a ``SectorManager``.
+    let mut sector_mgr = SectorManager::new(terrain_tex.info());
 
     // Framebuffer
     let mut back_buffer = Framebuffer::back_buffer(surface.size());
@@ -123,6 +107,9 @@ fn main() {
         let dt = clock.restart_seconds();
 
         //std::thread::sleep(Duration::from_millis(200));
+
+        // Load pending sectors
+        sector_mgr.finalize_sectors(&mut surface);
 
         // Poll events
         for event in surface.poll_events() {

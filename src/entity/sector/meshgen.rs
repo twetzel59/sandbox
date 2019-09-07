@@ -7,21 +7,24 @@
 //!
 //! In other words, it makes models for the sectors.
 
-use super::{
-    data::{SectorCoords, SECTOR_MAX, SECTOR_MIN},
-    Sector,
-};
+use super::data::{SectorCoords, SectorData, SECTOR_MAX, SECTOR_MIN};
 use crate::{
     block::Block,
     side::Side,
     vertexattrib::{PosAttrib, UvAttrib, VoxelVertex},
 };
-use luminance::{
-    context::GraphicsContext,
-    tess::{Mode, Tess, TessBuilder},
-};
 use png::OutputInfo;
 use std::ops::Add;
+
+/// Stores vertex attributes and indices in memory.
+///
+/// This structure provides a way to store vertices
+/// until they are uploaded to graphics memory by
+/// constructing a ``Tess``.
+pub struct PreGeometry {
+    pub vertices: Vec<VoxelVertex>,
+    pub indices: Vec<u32>,
+}
 
 // Visual length of the cube sides in
 // OpenGL model units.
@@ -96,16 +99,12 @@ const POSITIONS: [[f32; 3]; 8] = [
 /// Generate the mesh for the given ``SectorData``.
 ///
 /// If there are visible voxels in the data, their
-/// vertices are added to the tesselation, which
-/// is returned in a ``Some<Tess>``.
+/// vertices are added to the pre-geometry, which
+/// is returned in a ``Some<PreGeometry>``.
 ///
 /// If, on the other hand, there are no visible voxels
 /// in the sector data, ``None`` is returned.
-pub fn gen_terrain(
-    ctx: &mut impl GraphicsContext,
-    tex_info: &OutputInfo,
-    sct: &Sector,
-) -> Option<Tess> {
+pub fn gen_terrain(tex_info: &OutputInfo, voxels: &SectorData) -> Option<PreGeometry> {
     // Initialize empty vectors to hold the vertex
     // attribute data that will be generated.
     // Also, keep track of the last index, as the
@@ -113,10 +112,6 @@ pub fn gen_terrain(
     let mut vertices = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
     let mut current_index = 0;
-
-    // Alias the ``SectorData`` for this instance
-    // for easy access.
-    let voxels = sct.data();
 
     // For every ``Block``, or voxel, in the sector, we
     // will need to draw between zero and six faces.
@@ -222,20 +217,7 @@ pub fn gen_terrain(
         return None;
     }
 
-    // Create the Interleaved vertex buffer objects
-    // on the graphics card by using a ``luminance``
-    // ``Tesselation`` to represent the geometry.
-    let tess = TessBuilder::new(ctx)
-        .add_vertices(vertices)
-        .set_indices(indices)
-        .set_mode(Mode::Triangle)
-        .build()
-        .unwrap();
-
-    //If we are here, at least one block in the sector
-    // had geometry (it wasn't all air), and the geometry
-    // will be returned here.
-    Some(tess)
+    Some(PreGeometry { vertices, indices })
 }
 
 // Returns the translated vertex position for the block with

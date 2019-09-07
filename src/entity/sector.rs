@@ -18,7 +18,10 @@ use crate::maths::{
 };
 use data::{SectorData, SECTOR_DIM_EXCL};
 use generation::GenController;
-use luminance::{context::GraphicsContext, tess::Tess};
+use luminance::{
+    context::GraphicsContext,
+    tess::{Mode, Tess, TessBuilder},
+};
 use png::OutputInfo;
 use std::collections::hash_map::{self, HashMap};
 
@@ -49,23 +52,12 @@ pub struct Sector {
 }
 
 impl Sector {
-    /// Create a sector filled with the default block.
-    ///
-    /// Construction does not trigger the creation of the
-    /// ``Sector``'s geometry.
-    pub fn new(world_pos: SectorIndex) -> Sector {
-        Self::with_data(world_pos, SectorData::new())
-    }
-
     /// Create a sector with the provided voxel data.
-    ///
-    /// Construction will not result in the creation
-    /// of geometry.
-    pub fn with_data(world_pos: SectorIndex, sector_data: SectorData) -> Sector {
+    pub fn new(world_pos: SectorIndex, sector_data: SectorData, geometry: Option<Tess>) -> Sector {
         Sector {
             translation: Self::calc_mat(world_pos),
             data: sector_data,
-            geometry: None,
+            geometry,
         }
     }
 
@@ -73,15 +65,6 @@ impl Sector {
     /// the world origin.
     pub fn translation(&self) -> &Mat4x4 {
         &self.translation
-    }
-
-    /// Trigger the generation of the ``Sector``'s mesh.
-    ///
-    /// Since this function results in a side effect in
-    /// the ``luminance`` backend's state, the graphics
-    /// context is needed. It is usually the GLFW window.
-    pub fn gen_geometry(&mut self, texture_info: &OutputInfo, ctx: &mut impl GraphicsContext) {
-        self.geometry = meshgen::gen_terrain(ctx, texture_info, self);
     }
 
     /// Return the ``Sector``'s geometry, if it has any.
@@ -115,10 +98,33 @@ pub struct SectorManager {
 impl SectorManager {
     /// Create a new ``SectorManager`` with no stored
     /// ``Sectors``.
-    pub fn new() -> SectorManager {
+    pub fn new(tex_info: &OutputInfo) -> SectorManager {
         SectorManager {
             sectors: HashMap::new(),
-            generator: GenController::launch(),
+            generator: GenController::launch(tex_info),
+        }
+    }
+
+    /// Finish generating a sector whose terrain and geometry
+    /// has been generated in the worldgen thread, if the
+    /// sector is ready.
+    pub fn finalize_sectors(&mut self, ctx: &mut impl GraphicsContext) {
+        match self.generator.receiver().try_recv() {
+            Ok(message) => {
+                let tess = message.pre_geometry.map(|pre_geo| {                    
+                    TessBuilder::new(ctx)
+                        .add_vertices(pre_geo.vertices)
+                        .set_indices(pre_geo.indices)
+                        .set_mode(Mode::Triangle)
+                        .build()
+                        .unwrap()
+                });
+
+                let new_sector = Sector::new(message.world_pos, message.sector_data, tess);
+
+                self.sectors.insert(message.world_pos, new_sector);
+            }
+            Err(_) => {}
         }
     }
 
