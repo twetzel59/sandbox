@@ -150,8 +150,8 @@ pub fn gen_terrain(tex_info: &OutputInfo, voxels: &SectorData) -> Option<PreGeom
         // for performance. Otherwise, we generate the four
         // vertices for that square cube face.
         //
-        // The face attributes are hardcoded in a constant
-        // above.
+        // The face attributes are hardcoded in the FACES
+        // constant above.
         for f in &FACES {
             // Check if the neighboring block occludes the face
             // we are drawing.

@@ -57,6 +57,7 @@ macro_rules! mat4 {
 #[derive(Clone, Debug)]
 pub struct Mat4x4(pub M44);
 
+#[rustfmt::skip]
 impl Mul for &Mat4x4 {
     type Output = Mat4x4;
 
@@ -65,10 +66,10 @@ impl Mul for &Mat4x4 {
         let right = other;
 
         let mut result = mat4![
-            0., 0., 0., 0., //
-            0., 0., 0., 0., //
-            0., 0., 0., 0., //
-            0., 0., 0., 0., //
+            0., 0., 0., 0.,
+            0., 0., 0., 0.,
+            0., 0., 0., 0.,
+            0., 0., 0., 0.,
         ];
 
         for i in 0..4 {
