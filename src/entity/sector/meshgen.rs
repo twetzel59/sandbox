@@ -173,7 +173,7 @@ pub fn gen_terrain(tex_info: &OutputInfo, voxels: &SectorData) -> Option<PreGeom
             // quadrilateral face.
             //
             // pos_idx is (a reference to) an index into the hardcoded
-            // array ofrelative ``POSITIONS`` above.
+            // array of relative ``POSITIONS`` above.
             for pos_idx in &f.positions {
                 let pos_idx = *pos_idx;
 
@@ -281,6 +281,14 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     
     let blk_side = face.side;
     
+    // Query the size of the entire texture atlas.
+    let (width, height) = (tex_info.width, tex_info.height);
+    
+    // Determine the number of tiles there are in a single row
+    // of the texture atlas.
+    let tiles_per_row = width  / TILE_SIZE;
+    let tiles_per_col = height / TILE_SIZE;
+    
     // Determine the texture coordinate with respect to the *tile*.
     // These values will be in the open range [0, 1].
     //
@@ -288,12 +296,19 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     let tile_u = if flip_u { -orig[u_idx] + 1. } else {  orig[u_idx]      };
     let tile_v = if flip_v {  orig[v_idx]      } else { -orig[v_idx] + 1. };
     
-    // Query the size of the entire texture atlas.
-    let (width, height) = (tex_info.width, tex_info.height);
+    // A small (half-pixel) adjustment needs to be added or subtracted to or from
+    // the ``tile_u`` and ``tile_v`` values.
+    //
+    // The offset is equal to 1 / 256 for a tile size of 16, which allows the
+    // texture coordinate to lie just within the bounds of the target pixel,
+    // rather than exactly the edge.
+    //
+    // Without this offset, fragments from the neighboring tile may be erroneously
+    // rendered.
+    let offset = 1. / (16. * TILE_SIZE_F32);
     
-    // Determine the number of tiles there are in a single row
-    // of the texture atlas.
-    let tiles_per_row = width / TILE_SIZE;
+    let tile_u_adj = if tile_u < 0.5 { tile_u + offset } else { tile_u - offset };
+    let tile_v_adj = if tile_v < 0.5 { tile_v + offset } else { tile_v - offset };
     
     // Determine the block's texture id, and convert it to a f32.
     // For some blocks, the texture depends on which side of the
@@ -305,6 +320,6 @@ fn tex_coord(tex_info: &OutputInfo, blk: &Block, orig: [f32; 3], face: &Face) ->
     let atlas_v = (blk_id / tiles_per_row) as f32;
     
     // Select the correct corner of the tile in question.
-    [(tile_u + atlas_u) * TILE_SIZE_F32 / width as f32,
-     (tile_v + atlas_v) * TILE_SIZE_F32 / height as f32]
+    [(tile_u_adj + atlas_u) * TILE_SIZE_F32 / width as f32,
+     (tile_v_adj + atlas_v) * TILE_SIZE_F32 / height as f32]
 }

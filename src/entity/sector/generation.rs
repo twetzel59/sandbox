@@ -124,11 +124,15 @@ fn superflat_sector(world_pos: SectorIndex) -> SectorData {
         return data;
     }
 
-    for (SectorCoords(_, y, _), blk) in data.iter_mut() {
+    for (SectorCoords(x, y, z), blk) in data.iter_mut() {
         *blk = if y < SECTOR_MAX - 1 {
             Block::Soil
         } else if y == SECTOR_MAX - 1 {
-            Block::Grass
+            if x % 4 == 0 && z % 4 == 0 {
+                Block::TestBlock
+            } else {
+                Block::Grass
+            }
         } else {
             Block::Air
         };
